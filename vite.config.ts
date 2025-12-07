@@ -11,12 +11,16 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
-    open: true,
+    port: Number(process.env.PORT) || 3000, // Use Render's PORT environment variable
+    host: true,                             // Allow network access
+  },
+  preview: {
+    port: Number(process.env.PORT) || 4173, // Use the same PORT for preview
+    host: true,                             // Allow network access
+    allowedHosts: ['wmms-frontend.onrender.com'], // Allow your Render host
   },
   build: {
     outDir: 'dist',
     sourcemap: true,
   },
 })
-
