@@ -6,6 +6,8 @@ import { DashboardLayout } from '@/components/layouts/dashboard-layout'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { TicketsPage } from '@/pages/TicketsPage'
+import { OutagesPage } from '@/pages/OutagesPage'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import '@/styles/globals.css'
 
@@ -55,6 +57,26 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <DashboardPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/tickets"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <TicketsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/outages"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <OutagesPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
