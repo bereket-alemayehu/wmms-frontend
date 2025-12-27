@@ -46,12 +46,6 @@ export function TicketsPage() {
     setTickets((prev) => [newTicket, ...prev])
   }
 
-  const handleTicketAction = (action: string, ticketId: string) => {
-    if (action === "request-refund") {
-      setTickets((prev) => prev.map((t) => (t._id === ticketId ? { ...t, refundRequested: true } : t)))
-    }
-  }
-
   const showCustomer = useMemo(() => role === "supervisor" || role === "manager", [role])
 
   return (
@@ -90,12 +84,6 @@ export function TicketsPage() {
                     ticket={ticket}
                     showQueue={role === "customer"}
                     showCustomer={showCustomer}
-                    onAction={role === "customer" ? handleTicketAction : undefined}
-                    actions={
-                      role === "customer" && checkRefundEligibility(ticket) && !ticket.refundRequested
-                        ? [{ label: "Request Refund", action: "request-refund", variant: "destructive" as const }]
-                        : undefined
-                    }
                   />
                 ))}
               </div>
