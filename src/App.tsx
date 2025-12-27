@@ -8,6 +8,11 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { TicketsPage } from '@/pages/TicketsPage'
 import { OutagesPage } from '@/pages/OutagesPage'
+import { TasksPage } from '@/pages/TasksPage'
+import { TechniciansPage } from '@/pages/TechniciansPage'
+import { RefundsPage } from '@/pages/RefundsPage'
+import { AnalyticsPage } from '@/pages/AnalyticsPage'
+import { MyRefundsPage } from '@/pages/MyRefundsPage'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import '@/styles/globals.css'
 
@@ -77,6 +82,56 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <OutagesPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/tasks"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <TasksPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/technicians"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <TechniciansPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/refunds"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <RefundsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/analytics"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <AnalyticsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/my-refunds"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <MyRefundsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

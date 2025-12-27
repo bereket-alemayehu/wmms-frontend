@@ -16,21 +16,25 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Ticket, Users, AlertTriangle, Clock, Plus } from "lucide-react"
 import { mockTickets, mockUsers, mockOutages } from "@/lib/mock-data"
+import { PostOutageDialog } from "@/features/outages/components/post-outage-dialog"
+import type { Outage } from "@/lib/types"
 
 export function SupervisorDashboard() {
   const { user } = useAuth()
   const [tickets, setTickets] = useState(mockTickets)
+  const [outages, setOutages] = useState<Outage[]>(mockOutages)
   const [assignDialog, setAssignDialog] = useState<{ open: boolean; ticketId: string | null }>({
     open: false,
     ticketId: null,
   })
+  const [outageDialog, setOutageDialog] = useState(false)
   const [selectedTechnician, setSelectedTechnician] = useState("")
 
   const technicians = mockUsers.filter((u) => u.role === "technician" && u.officeId === user?.officeId)
   const pendingTickets = tickets.filter((t) => t.status === "Pending" && t.officeId === user?.officeId)
   const assignedTickets = tickets.filter((t) => t.status === "Assigned" && t.officeId === user?.officeId)
   const inProgressTickets = tickets.filter((t) => t.status === "In Progress" && t.officeId === user?.officeId)
-  const activeOutages = mockOutages.filter((o) => o.status === "Active" && o.officeId === user?.officeId)
+  const activeOutages = outages.filter((o) => o.status === "Active" && o.officeId === user?.officeId)
 
   const handleAssign = () => {
     if (!assignDialog.ticketId || !selectedTechnician) return
@@ -51,6 +55,31 @@ export function SupervisorDashboard() {
     }
   }
 
+  const handlePostOutage = async (data: {
+    title: string
+    message: string
+    affectedAreas: string[]
+    estimatedResolution?: string
+  }) => {
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const newOutage: Outage = {
+      _id: `outage-${Date.now()}`,
+      officeId: user!.officeId!,
+      postedBy: user!._id,
+      title: data.title,
+      message: data.message,
+      affectedAreas: data.affectedAreas,
+      status: "Active",
+      estimatedResolution: data.estimatedResolution ? new Date(data.estimatedResolution).toISOString() : undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    setOutages((prev) => [newOutage, ...prev])
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -59,7 +88,10 @@ export function SupervisorDashboard() {
           <h1 className="text-2xl font-bold text-foreground">Supervisor Dashboard</h1>
           <p className="text-muted-foreground">Manage tickets and assign technicians</p>
         </div>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button
+          onClick={() => setOutageDialog(true)}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Post Outage
         </Button>
@@ -200,6 +232,16 @@ export function SupervisorDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Post Outage Dialog */}
+      {user?.officeId && (
+        <PostOutageDialog
+          open={outageDialog}
+          onOpenChange={setOutageDialog}
+          onSubmit={handlePostOutage}
+          officeId={user.officeId}
+        />
+      )}
     </div>
   )
 }

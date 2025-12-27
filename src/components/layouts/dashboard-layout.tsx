@@ -37,6 +37,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
   customer: [
     { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
     { label: "My Tickets", href: "/dashboard/tickets", icon: <Ticket className="w-5 h-5" /> },
+    { label: "My Refunds", href: "/dashboard/my-refunds", icon: <DollarSign className="w-5 h-5" /> },
     { label: "Outages", href: "/dashboard/outages", icon: <AlertTriangle className="w-5 h-5" /> },
   ],
   supervisor: [
@@ -67,8 +68,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   const navItems = navItemsByRole[user.role] || []
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/login')
   }
 
@@ -89,7 +90,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setSidebarOpen(false)}>
-          <aside className="w-64 h-full bg-sidebar border-r border-sidebar-border" onClick={(e) => e.stopPropagation()}>
+          <aside className="w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
               <div className="flex items-center gap-3">
                 <Wifi className="w-6 h-6 text-primary" />
@@ -99,7 +100,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <X className="w-5 h-5" />
               </Button>
             </div>
-            <nav className="p-4 space-y-1">
+            <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -117,6 +118,19 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 </Link>
               ))}
             </nav>
+            <div className="p-4 border-t border-sidebar-border">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  handleLogout()
+                  setSidebarOpen(false)
+                }}
+                className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </aside>
         </div>
       )}
@@ -144,8 +158,16 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-sidebar-border space-y-2">
           <UserMenu user={user} logout={handleLogout} expanded />
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="w-full justify-start text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </aside>
 

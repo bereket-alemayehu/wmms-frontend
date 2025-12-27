@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
 import type { User, UserRole } from "../types"
 import { mockUsers } from "@/lib/mock-data"
+import { authApi } from "../api/auth"
 
 interface AuthContextType {
   user: User | null
@@ -33,8 +34,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false
   }, [])
 
-  const logout = useCallback(() => {
-    setUser(null)
+  const logout = useCallback(async () => {
+    try {
+      // Call logout API endpoint
+      await authApi.logout()
+    } catch (error) {
+      // Even if API call fails, we still want to clear local state
+      console.error("Logout API call failed:", error)
+    } finally {
+      // Clear auth token from localStorage
+      localStorage.removeItem('authToken')
+      // Clear user state
+      setUser(null)
+    }
   }, [])
 
   const switchRole = useCallback((role: UserRole) => {

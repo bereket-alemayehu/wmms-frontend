@@ -4,8 +4,11 @@ import { StatsCard } from "./stats-card"
 import { TicketCard } from "@/features/tickets/components/ticket-card"
 import { OutageCard } from "@/features/outages/components/outage-card"
 import { CreateTicketDialog } from "@/features/tickets/components/create-ticket-dialog"
-import { mockTickets, mockOutages, checkRefundEligibility } from "@/lib/mock-data"
-import { Ticket, AlertTriangle, Clock, CheckCircle } from "lucide-react"
+import { mockTickets, mockOutages, mockRefunds, checkRefundEligibility } from "@/lib/mock-data"
+import { Ticket, AlertTriangle, Clock, CheckCircle, DollarSign } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import type { TicketCategory } from "@/features/tickets/types"
 
 export function CustomerDashboard() {
@@ -15,7 +18,10 @@ export function CustomerDashboard() {
   const activeOutages = mockOutages.filter((o) => o.status === "Active")
   const openTickets = tickets.filter((t) => !["Resolved", "Closed"].includes(t.status))
   const resolvedTickets = tickets.filter((t) => ["Resolved", "Closed"].includes(t.status))
-  const refundEligible = tickets.filter((t) => checkRefundEligibility(t) && !t.refundRequested)
+  const refundEligible = tickets.filter((t) => checkRefundEligibility(t))
+  const customerRefunds = mockRefunds.filter((r) => r.customerId === user?._id)
+  const approvedRefunds = customerRefunds.filter((r) => r.status === "Approved")
+  const totalRefundAmount = approvedRefunds.reduce((sum, r) => sum + r.amount, 0)
 
   const handleCreateTicket = async (data: { category: TicketCategory; description: string; officeId: string }) => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -32,12 +38,6 @@ export function CustomerDashboard() {
       updatedAt: new Date().toISOString(),
     }
     setTickets((prev) => [newTicket, ...prev])
-  }
-
-  const handleTicketAction = (action: string, ticketId: string) => {
-    if (action === "request-refund") {
-      setTickets((prev) => prev.map((t) => (t._id === ticketId ? { ...t, refundRequested: true } : t)))
-    }
   }
 
   return (
@@ -85,10 +85,10 @@ export function CustomerDashboard() {
           description="Current estimate"
         />
         <StatsCard
-          title="Refund Eligible"
-          value={refundEligible.length}
-          icon={<AlertTriangle className="w-5 h-5" />}
-          description="Over 7 days open"
+          title="My Refunds"
+          value={customerRefunds.length}
+          icon={<DollarSign className="w-5 h-5" />}
+          description={`${totalRefundAmount} ETB total`}
         />
       </div>
 
@@ -101,6 +101,69 @@ export function CustomerDashboard() {
               <OutageCard key={outage._id} outage={outage} />
             ))}
           </div>
+        </section>
+      )}
+
+      {/* My Refunds Section */}
+      {customerRefunds.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-4">My Refunds</h2>
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-card-foreground text-base">Refund History</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">View your refund status and details</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {customerRefunds.map((refund) => {
+                  const ticket = tickets.find((t) => t._id === refund.ticketId)
+                  const refundDate = new Date(refund.createdAt).toLocaleDateString()
+                  const statusColors: Record<string, string> = {
+                    Approved: "bg-success/20 text-success border-success/30",
+                    Requested: "bg-warning/20 text-warning border-warning/30",
+                    Rejected: "bg-destructive/20 text-destructive border-destructive/30",
+                  }
+
+                  return (
+                    <div key={refund._id} className="p-4 bg-secondary rounded-lg border border-border">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className={cn("font-medium", statusColors[refund.status] || "bg-secondary text-secondary-foreground border-border")}>
+                              {refund.status}
+                            </Badge>
+                            <span className="text-lg font-bold text-secondary-foreground">{refund.amount} ETB</span>
+                          </div>
+                          {ticket && (
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-medium text-secondary-foreground">Ticket:</span> {ticket.category}
+                              </p>
+                              <p className="text-xs text-muted-foreground font-mono">
+                                Ticket #{refund.ticketId.slice(-8).toUpperCase()}
+                              </p>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Processed: {refundDate}</span>
+                            {refund.updatedAt !== refund.createdAt && (
+                              <span>Updated: {new Date(refund.updatedAt).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                          {refund.adminComment && (
+                            <div className="mt-2 p-2 bg-card rounded border border-border">
+                              <p className="text-xs font-medium text-card-foreground mb-1">Note:</p>
+                              <p className="text-xs text-muted-foreground italic">{refund.adminComment}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </section>
       )}
 
@@ -119,12 +182,6 @@ export function CustomerDashboard() {
                 key={ticket._id}
                 ticket={ticket}
                 showQueue
-                onAction={handleTicketAction}
-                actions={
-                  checkRefundEligibility(ticket) && !ticket.refundRequested
-                    ? [{ label: "Request Refund", action: "request-refund", variant: "destructive" as const }]
-                    : undefined
-                }
               />
             ))}
           </div>
