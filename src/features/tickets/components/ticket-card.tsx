@@ -1,10 +1,10 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, MapPin, User, AlertTriangle } from "lucide-react"
+import { Clock, MapPin, User } from "lucide-react"
 import type { Ticket } from "../types"
 import { cn } from "@/lib/utils"
-import { checkRefundEligibility, getQueuePosition, mockUsers, mockOffices } from "@/lib/mock-data"
+import { getQueuePosition, mockUsers, mockOffices } from "@/lib/mock-data"
 
 const statusColors: Record<string, string> = {
   Pending: "bg-warning/20 text-warning border-warning/30",
@@ -26,7 +26,6 @@ export function TicketCard({ ticket, showQueue, showCustomer, onAction, actions 
   const customer = mockUsers.find((u) => u._id === ticket.customerId)
   const office = mockOffices.find((o) => o._id === ticket.officeId)
   const technician = ticket.assignedTo ? mockUsers.find((u) => u._id === ticket.assignedTo) : null
-  const refundEligible = checkRefundEligibility(ticket)
   const queuePosition = showQueue ? getQueuePosition(ticket._id, ticket.officeId) : null
 
   const createdDate = new Date(ticket.createdAt)
@@ -44,12 +43,6 @@ export function TicketCard({ ticket, showQueue, showCustomer, onAction, actions 
               <Badge variant="outline" className="bg-secondary text-secondary-foreground border-border">
                 {ticket.category}
               </Badge>
-              {refundEligible && !ticket.refundRequested && (
-                <Badge variant="outline" className="bg-destructive/20 text-destructive border-destructive/30">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
-                  Refund Eligible
-                </Badge>
-              )}
             </div>
             <p className="text-xs text-muted-foreground font-mono">#{ticket._id.slice(-8).toUpperCase()}</p>
           </div>
