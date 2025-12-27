@@ -1,41 +1,23 @@
-import { useState } from "react"
 import { StatsCard } from "./stats-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart3, DollarSign, Ticket, TrendingUp, CheckCircle, X } from "lucide-react"
+import { BarChart3, DollarSign, Ticket, TrendingUp } from "lucide-react"
 import { mockTickets, mockRefunds, mockUsers } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
 const statusColors: Record<string, string> = {
-  Requested: "bg-warning/20 text-warning border-warning/30",
   Approved: "bg-success/20 text-success border-success/30",
-  Rejected: "bg-destructive/20 text-destructive border-destructive/30",
+  Processed: "bg-primary/20 text-primary border-primary/30",
 }
 
 export function ManagerDashboard() {
-  const [refunds, setRefunds] = useState(mockRefunds)
+  const refunds = mockRefunds
 
   const totalTickets = mockTickets.length
   const resolvedTickets = mockTickets.filter((t) => ["Resolved", "Closed"].includes(t.status)).length
-  const pendingRefunds = refunds.filter((r) => r.status === "Requested")
   const totalRefundAmount = refunds.filter((r) => r.status === "Approved").reduce((sum, r) => sum + r.amount, 0)
-
-  const handleRefundAction = (refundId: string, action: "Approved" | "Rejected") => {
-    setRefunds((prev) =>
-      prev.map((r) =>
-        r._id === refundId
-          ? {
-              ...r,
-              status: action,
-              adminComment: action === "Approved" ? "Approved by manager" : "Rejected - does not meet criteria",
-              updatedAt: new Date().toISOString(),
-            }
-          : r,
-      ),
-    )
-  }
+  const refundCount = refunds.length
 
   return (
     <div className="space-y-8">
@@ -60,10 +42,10 @@ export function ManagerDashboard() {
           trend={{ value: 5, positive: true }}
         />
         <StatsCard
-          title="Pending Refunds"
-          value={pendingRefunds.length}
+          title="Total Refunds"
+          value={refundCount}
           icon={<DollarSign className="w-5 h-5" />}
-          description="Awaiting approval"
+          description="Automatically processed"
         />
         <StatsCard
           title="Total Refunded"
@@ -80,7 +62,7 @@ export function ManagerDashboard() {
             value="refunds"
             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            Refund Requests
+            Refunds
           </TabsTrigger>
           <TabsTrigger
             value="analytics"
@@ -93,11 +75,12 @@ export function ManagerDashboard() {
         <TabsContent value="refunds" className="space-y-4">
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-card-foreground">Refund Requests</CardTitle>
+              <CardTitle className="text-card-foreground">Refunds</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">View all processed refunds</p>
             </CardHeader>
             <CardContent>
               {refunds.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No refund requests</p>
+                <p className="text-muted-foreground text-center py-8">No refunds processed</p>
               ) : (
                 <div className="space-y-4">
                   {refunds.map((refund) => {
@@ -107,11 +90,11 @@ export function ManagerDashboard() {
                     return (
                       <div
                         key={refund._id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-secondary rounded-lg"
+                        className="p-4 bg-secondary rounded-lg"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className={cn(statusColors[refund.status])}>
+                            <Badge variant="outline" className={cn(statusColors[refund.status] || "bg-secondary text-secondary-foreground border-border")}>
                               {refund.status}
                             </Badge>
                             <span className="text-sm font-medium text-secondary-foreground">{refund.amount} ETB</span>
@@ -123,29 +106,9 @@ export function ManagerDashboard() {
                             Ticket #{refund.ticketId.slice(-8).toUpperCase()}
                           </p>
                           {refund.adminComment && (
-                            <p className="text-xs text-muted-foreground italic">{refund.adminComment}</p>
+                            <p className="text-xs text-muted-foreground italic mt-1">{refund.adminComment}</p>
                           )}
                         </div>
-                        {refund.status === "Requested" && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleRefundAction(refund._id, "Approved")}
-                              className="bg-success text-success-foreground hover:bg-success/90"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleRefundAction(refund._id, "Rejected")}
-                            >
-                              <X className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     )
                   })}
