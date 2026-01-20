@@ -1,30 +1,50 @@
-import { useState } from "react"
-import { useAuth } from "@/features/auth/hooks/useAuth"
-import { StatsCard } from "./stats-card"
-import { TicketCard } from "@/features/tickets/components/ticket-card"
-import { OutageCard } from "@/features/outages/components/outage-card"
-import { CreateTicketDialog } from "@/features/tickets/components/create-ticket-dialog"
-import { mockTickets, mockOutages, mockRefunds, checkRefundEligibility } from "@/lib/mock-data"
-import { Ticket, AlertTriangle, Clock, CheckCircle, DollarSign } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import type { TicketCategory } from "@/features/tickets/types"
+import { useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { StatsCard } from "./stats-card";
+import { TicketCard } from "@/features/tickets/components/ticket-card";
+import { OutageCard } from "@/features/outages/components/outage-card";
+import { CreateTicketDialog } from "@/features/tickets/components/create-ticket-dialog";
+import { mockTickets, mockOutages, mockRefunds } from "@/lib/mock-data";
+import {
+  Ticket,
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  DollarSign,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import type { TicketCategory } from "@/features/tickets/types";
 
 export function CustomerDashboard() {
-  const { user } = useAuth()
-  const [tickets, setTickets] = useState(mockTickets.filter((t) => t.customerId === user?._id))
+  const { user } = useAuth();
+  const [tickets, setTickets] = useState(
+    mockTickets.filter((t) => t.customerId === user?._id)
+  );
 
-  const activeOutages = mockOutages.filter((o) => o.status === "Active")
-  const openTickets = tickets.filter((t) => !["Resolved", "Closed"].includes(t.status))
-  const resolvedTickets = tickets.filter((t) => ["Resolved", "Closed"].includes(t.status))
-  const refundEligible = tickets.filter((t) => checkRefundEligibility(t))
-  const customerRefunds = mockRefunds.filter((r) => r.customerId === user?._id)
-  const approvedRefunds = customerRefunds.filter((r) => r.status === "Approved")
-  const totalRefundAmount = approvedRefunds.reduce((sum, r) => sum + r.amount, 0)
+  const activeOutages = mockOutages.filter((o) => o.status === "Active");
+  const openTickets = tickets.filter(
+    (t) => !["Resolved", "Closed"].includes(t.status)
+  );
+  const resolvedTickets = tickets.filter((t) =>
+    ["Resolved", "Closed"].includes(t.status)
+  );
+  const customerRefunds = mockRefunds.filter((r) => r.customerId === user?._id);
+  const approvedRefunds = customerRefunds.filter(
+    (r) => r.status === "Approved"
+  );
+  const totalRefundAmount = approvedRefunds.reduce(
+    (sum, r) => sum + r.amount,
+    0
+  );
 
-  const handleCreateTicket = async (data: { category: TicketCategory; description: string; officeId: string }) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+  const handleCreateTicket = async (data: {
+    category: TicketCategory;
+    description: string;
+    officeId: string;
+  }) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const newTicket = {
       _id: `ticket${Date.now()}`,
       customerId: user!._id,
@@ -36,17 +56,21 @@ export function CustomerDashboard() {
       refundRequested: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    }
-    setTickets((prev) => [newTicket, ...prev])
-  }
+    };
+    setTickets((prev) => [newTicket, ...prev]);
+  };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back, {user?.fullName.split(" ")[0]}</h1>
-          <p className="text-muted-foreground">Track your support tickets and service status</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            Welcome back, {user?.fullName.split(" ")[0]}
+          </h1>
+          <p className="text-muted-foreground">
+            Track your support tickets and service status
+          </p>
         </div>
         <CreateTicketDialog onSubmit={handleCreateTicket} />
       </div>
@@ -59,7 +83,8 @@ export function CustomerDashboard() {
             <span className="font-semibold">Active Service Outages</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            There are {activeOutages.length} active outage(s) in your area that may affect your service.
+            There are {activeOutages.length} active outage(s) in your area that
+            may affect your service.
           </p>
         </div>
       )}
@@ -95,7 +120,9 @@ export function CustomerDashboard() {
       {/* Active Outages Section */}
       {activeOutages.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4">Service Outages</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">
+            Service Outages
+          </h2>
           <div className="grid gap-4 md:grid-cols-2">
             {activeOutages.map((outage) => (
               <OutageCard key={outage._id} outage={outage} />
@@ -107,59 +134,93 @@ export function CustomerDashboard() {
       {/* My Refunds Section */}
       {customerRefunds.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4">My Refunds</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">
+            My Refunds
+          </h2>
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-card-foreground text-base">Refund History</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">View your refund status and details</p>
+              <CardTitle className="text-card-foreground text-base">
+                Refund History
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                View your refund status and details
+              </p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {customerRefunds.map((refund) => {
-                  const ticket = tickets.find((t) => t._id === refund.ticketId)
-                  const refundDate = new Date(refund.createdAt).toLocaleDateString()
+                  const ticket = tickets.find((t) => t._id === refund.ticketId);
+                  const refundDate = new Date(
+                    refund.createdAt
+                  ).toLocaleDateString();
                   const statusColors: Record<string, string> = {
                     Approved: "bg-success/20 text-success border-success/30",
                     Requested: "bg-warning/20 text-warning border-warning/30",
-                    Rejected: "bg-destructive/20 text-destructive border-destructive/30",
-                  }
+                    Rejected:
+                      "bg-destructive/20 text-destructive border-destructive/30",
+                  };
 
                   return (
-                    <div key={refund._id} className="p-4 bg-secondary rounded-lg border border-border">
+                    <div
+                      key={refund._id}
+                      className="p-4 bg-secondary rounded-lg border border-border"
+                    >
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className={cn("font-medium", statusColors[refund.status] || "bg-secondary text-secondary-foreground border-border")}>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "font-medium",
+                                statusColors[refund.status] ||
+                                  "bg-secondary text-secondary-foreground border-border"
+                              )}
+                            >
                               {refund.status}
                             </Badge>
-                            <span className="text-lg font-bold text-secondary-foreground">{refund.amount} ETB</span>
+                            <span className="text-lg font-bold text-secondary-foreground">
+                              {refund.amount} ETB
+                            </span>
                           </div>
                           {ticket && (
                             <div className="space-y-1">
                               <p className="text-sm text-muted-foreground">
-                                <span className="font-medium text-secondary-foreground">Ticket:</span> {ticket.category}
+                                <span className="font-medium text-secondary-foreground">
+                                  Ticket:
+                                </span>{" "}
+                                {ticket.category}
                               </p>
                               <p className="text-xs text-muted-foreground font-mono">
-                                Ticket #{refund.ticketId.slice(-8).toUpperCase()}
+                                Ticket #
+                                {refund.ticketId.slice(-8).toUpperCase()}
                               </p>
                             </div>
                           )}
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span>Processed: {refundDate}</span>
                             {refund.updatedAt !== refund.createdAt && (
-                              <span>Updated: {new Date(refund.updatedAt).toLocaleDateString()}</span>
+                              <span>
+                                Updated:{" "}
+                                {new Date(
+                                  refund.updatedAt
+                                ).toLocaleDateString()}
+                              </span>
                             )}
                           </div>
                           {refund.adminComment && (
                             <div className="mt-2 p-2 bg-card rounded border border-border">
-                              <p className="text-xs font-medium text-card-foreground mb-1">Note:</p>
-                              <p className="text-xs text-muted-foreground italic">{refund.adminComment}</p>
+                              <p className="text-xs font-medium text-card-foreground mb-1">
+                                Note:
+                              </p>
+                              <p className="text-xs text-muted-foreground italic">
+                                {refund.adminComment}
+                              </p>
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </CardContent>
@@ -169,25 +230,24 @@ export function CustomerDashboard() {
 
       {/* Recent Tickets */}
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Your Tickets</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          Your Tickets
+        </h2>
         {tickets.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-lg">
             <Ticket className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No tickets yet. Create one to get started.</p>
+            <p className="text-muted-foreground">
+              No tickets yet. Create one to get started.
+            </p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {tickets.map((ticket) => (
-              <TicketCard
-                key={ticket._id}
-                ticket={ticket}
-                showQueue
-              />
+              <TicketCard key={ticket._id} ticket={ticket} showQueue />
             ))}
           </div>
         )}
       </section>
     </div>
-  )
+  );
 }
-
