@@ -1,29 +1,98 @@
 import apiClient from '@/lib/axios'
-import type { User, UserRole } from '../types'
+import type { User } from '../types'
 
-export interface LoginRequest {
-  phoneNumber: string
-  role: UserRole
+// API Response types
+export interface ApiResponse<T> {
+  status: 'success' | 'error'
+  message?: string
+  data?: T
+  accessToken?: string
+  statusCode?: number
+}
+
+export interface SignupInitiateRequest {
+  serviceNumber: string
+  password: string
+  passwordConfirm: string
+}
+
+export interface SignupInitiateResponse {
+  fullName: string
+  email: string
+}
+
+export interface SignupVerifyOtpRequest {
+  serviceNumber: string
   otp: string
 }
 
-export interface LoginResponse {
+export interface LoginRequest {
+  serviceNumber: string
+  password: string
+}
+
+export interface AuthResponse {
   user: User
-  token: string
 }
 
 export const authApi = {
-  login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/login', data)
+  // Signup - Step 1: Initiate
+  signupInitiate: async (data: SignupInitiateRequest): Promise<ApiResponse<SignupInitiateResponse>> => {
+    const response = await apiClient.post<ApiResponse<SignupInitiateResponse>>('/auth/signup/initiate', data)
     return response.data
   },
 
-  logout: async (): Promise<void> => {
-    await apiClient.post('/auth/logout')
+  // Signup - Step 2: Verify OTP
+  signupVerifyOtp: async (data: SignupVerifyOtpRequest): Promise<ApiResponse<AuthResponse>> => {
+    const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/signup/verify-otp', data)
+    return response.data
   },
 
-  verifyOtp: async (phoneNumber: string, otp: string): Promise<{ valid: boolean }> => {
-    const response = await apiClient.post<{ valid: boolean }>('/auth/verify-otp', { phoneNumber, otp })
+  // Login
+  login: async (data: LoginRequest): Promise<ApiResponse<AuthResponse>> => {
+    try {
+      const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data)
+      return response.data
+    } catch (error: any) {
+      // Re-throw with the error response data so it can be handled upstream
+      throw error
+    }
+  },
+
+  // Logout
+  logout: async (): Promise<ApiResponse<null>> => {
+    const response = await apiClient.post<ApiResponse<null>>('/auth/logout')
+    return response.data
+  },
+
+  // Get current user
+  getCurrentUser: async (): Promise<ApiResponse<AuthResponse>> => {
+    const response = await apiClient.get<ApiResponse<AuthResponse>>('/auth/me')
+    return response.data
+  },
+
+  // Forgot password
+  forgotPassword: async (serviceNumber: string): Promise<ApiResponse<null>> => {
+    const response = await apiClient.post<ApiResponse<null>>('/auth/forgot-password', { serviceNumber })
+    return response.data
+  },
+
+  // Reset password
+  resetPassword: async (token: string, password: string, passwordConfirm: string): Promise<ApiResponse<AuthResponse>> => {
+    const response = await apiClient.patch<ApiResponse<AuthResponse>>(`/auth/reset-password/${token}`, {
+      password,
+      passwordConfirm,
+    })
+    return response.data
+  },
+
+  // Update password
+  updatePassword: async (currentPassword: string, newPassword: string, newPasswordConfirm: string): Promise<ApiResponse<AuthResponse>> => {
+    const response = await apiClient.patch<ApiResponse<AuthResponse>>('/auth/update-password', {
+      currentPassword,
+      newPassword,
+      newPasswordConfirm,
+    })
     return response.data
   },
 }
