@@ -1,4 +1,4 @@
-import type { User, Office, Ticket, Refund, Outage } from "./types"
+import type { User, Office, Ticket, Refund, Outage } from "./types";
 
 // Mock data for demonstration - in production, this would come from MongoDB
 
@@ -21,12 +21,13 @@ export const mockOffices: Office[] = [
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
   },
-]
+];
 
 export const mockUsers: User[] = [
   {
     _id: "user1",
     fullName: "Abebe Kebede",
+    email: "abebe.kebede@example.com",
     phoneNumber: "+251911223344",
     role: "customer",
     serviceNumber: "SVC-001234",
@@ -36,8 +37,10 @@ export const mockUsers: User[] = [
   {
     _id: "user2",
     fullName: "Sara Tesfaye",
+    email: "sara.tesfaye@example.com",
     phoneNumber: "+251922334455",
     role: "supervisor",
+    serviceNumber: "SVC-001235",
     officeId: "office1",
     createdAt: "2024-01-10T00:00:00Z",
     updatedAt: "2024-01-10T00:00:00Z",
@@ -45,8 +48,10 @@ export const mockUsers: User[] = [
   {
     _id: "user3",
     fullName: "Dawit Hailu",
+    email: "dawit.hailu@example.com",
     phoneNumber: "+251933445566",
     role: "technician",
+    serviceNumber: "SVC-001236",
     officeId: "office1",
     createdAt: "2024-01-12T00:00:00Z",
     updatedAt: "2024-01-12T00:00:00Z",
@@ -54,21 +59,25 @@ export const mockUsers: User[] = [
   {
     _id: "user4",
     fullName: "Meron Alemu",
+    email: "meron.alemu@example.com",
     phoneNumber: "+251944556677",
     role: "manager",
+    serviceNumber: "SVC-001237",
     createdAt: "2024-01-05T00:00:00Z",
     updatedAt: "2024-01-05T00:00:00Z",
   },
   {
     _id: "user5",
     fullName: "Yonas Bekele",
+    email: "yonas.bekele@example.com",
     phoneNumber: "+251955667788",
     role: "technician",
+    serviceNumber: "SVC-001238",
     officeId: "office1",
     createdAt: "2024-01-14T00:00:00Z",
     updatedAt: "2024-01-14T00:00:00Z",
   },
-]
+];
 
 export const mockTickets: Ticket[] = [
   {
@@ -76,7 +85,8 @@ export const mockTickets: Ticket[] = [
     customerId: "user1",
     officeId: "office1",
     category: "No Connection",
-    description: "Internet has been down for 2 days. Router lights are blinking red.",
+    description:
+      "Internet has been down for 2 days. Router lights are blinking red.",
     status: "Pending",
     refundEligible: false,
     refundRequested: false,
@@ -124,7 +134,7 @@ export const mockTickets: Ticket[] = [
     createdAt: "2024-11-10T12:00:00Z",
     updatedAt: "2024-11-18T10:00:00Z",
   },
-]
+];
 
 export const mockRefunds: Refund[] = [
   {
@@ -137,16 +147,7 @@ export const mockRefunds: Refund[] = [
     createdAt: "2024-11-18T11:00:00Z",
     updatedAt: "2024-11-19T09:00:00Z",
   },
-  {
-    _id: "refund2",
-    ticketId: "ticket3",
-    customerId: "user1",
-    amount: 180,
-    status: "Requested",
-    createdAt: "2024-12-01T08:00:00Z",
-    updatedAt: "2024-12-01T08:00:00Z",
-  },
-]
+];
 
 export const mockOutages: Outage[] = [
   {
@@ -173,28 +174,32 @@ export const mockOutages: Outage[] = [
     createdAt: "2024-11-28T00:00:00Z",
     updatedAt: "2024-11-28T06:00:00Z",
   },
-]
+];
 
 // Helper functions
 export const checkRefundEligibility = (ticket: Ticket): boolean => {
-  const ONE_DAY = 24 * 60 * 60 * 1000
-  const now = new Date()
-  const created = new Date(ticket.createdAt)
-  const diffDays = Math.round(Math.abs((now.getTime() - created.getTime()) / ONE_DAY))
-  return diffDays > 7 && ticket.status !== "Closed"
-}
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const created = new Date(ticket.createdAt);
+  const diffDays = Math.round(
+    Math.abs((now.getTime() - created.getTime()) / ONE_DAY),
+  );
+  return diffDays > 7 && ticket.status !== "Closed";
+};
 
-export const getQueuePosition = (ticketId: string, officeId: string): number => {
-  const ticket = mockTickets.find((t) => t._id === ticketId)
-  if (!ticket) return 0
+export const getQueuePosition = (
+  ticketId: string,
+  officeId: string,
+): number => {
+  const ticket = mockTickets.find((t) => t._id === ticketId);
+  if (!ticket) return 0;
 
   const position = mockTickets.filter(
     (t) =>
       t.officeId === officeId &&
       ["Pending", "Assigned"].includes(t.status) &&
       new Date(t.createdAt) < new Date(ticket.createdAt),
-  ).length
+  ).length;
 
-  return position + 1
-}
-
+  return position + 1;
+};
