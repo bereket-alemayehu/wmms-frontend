@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/common/theme-provider'
 import { AuthProvider } from '@/features/auth/contexts/auth-context'
 import { DashboardLayout } from '@/components/layouts/dashboard-layout'
 import { LoginPage } from '@/pages/LoginPage'
+import { SignupPage } from '@/pages/SignupPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { TicketsPage } from '@/pages/TicketsPage'
@@ -19,7 +20,16 @@ import { queryClient } from '@/lib/react-query'
 import '@/styles/globals.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
+
+  // Wait for auth check to complete
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />
@@ -29,7 +39,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
+
+  // Wait for auth check to complete
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
+  }
 
   if (user) {
     return <Navigate to="/dashboard" replace />
@@ -46,6 +65,14 @@ function AppRoutes() {
         element={
           <PublicRoute>
             <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignupPage />
           </PublicRoute>
         }
       />

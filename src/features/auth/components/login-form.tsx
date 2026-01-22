@@ -1,39 +1,48 @@
 import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Wifi, Loader2 } from "lucide-react"
 import { useAuth } from "@/features/auth/hooks/useAuth"
-import type { UserRole } from "@/features/auth/types"
 
 export function LoginForm() {
   const { login, isLoading } = useAuth()
-  const [phoneNumber, setPhoneNumber] = useState("")
-  const [role, setRole] = useState<UserRole>("customer")
-  const [otp, setOtp] = useState("")
-  const [step, setStep] = useState<"phone" | "otp">("phone")
+  const navigate = useNavigate()
+  const [serviceNumber, setServiceNumber] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
 
-  const handleSendOtp = () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      setError("Please enter a valid phone number")
-      return
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setError("")
-    setStep("otp")
-  }
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
-      setError("Please enter a 6-digit OTP")
+    if (!serviceNumber || !password) {
+      setError("Please enter both service number and password")
       return
     }
-    setError("")
-    const success = await login(phoneNumber, role)
-    if (!success) {
-      setError("Login failed. Please try again.")
+
+    try {
+      console.log('Attempting login with:', { serviceNumber })
+      const result = await login(serviceNumber, password)
+      console.log('Login result:', result)
+      
+      if (result.success) {
+        // Cookie is automatically set by backend
+        // Redirect to dashboard
+        navigate('/dashboard')
+      } else {
+        // Display error message from backend
+        const errorMsg = result.error || "Login failed. Please try again."
+        console.log('Login failed, setting error:', errorMsg)
+        setError(errorMsg)
+        console.log('Error state after setError:', errorMsg)
+      }
+    } catch (err) {
+      // Fallback error handling
+      console.error('Unexpected login error in form:', err)
+      setError("An unexpected error occurred. Please try again.")
     }
   }
 
@@ -50,86 +59,82 @@ export function LoginForm() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {step === "phone" ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-card-foreground">
-                  Login as
-                </Label>
-                <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                  <SelectTrigger id="role" className="bg-input border-border text-card-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="customer">Customer</SelectItem>
-                    <SelectItem value="supervisor">Supervisor</SelectItem>
-                    <SelectItem value="technician">Technician</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                  </SelectContent>
-                </Select>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="serviceNumber" className="text-card-foreground">
+                Service Number
+              </Label>
+              <Input
+                id="serviceNumber"
+                type="text"
+                placeholder="WMMS-CUST-100234"
+                value={serviceNumber}
+                onChange={(e) => setServiceNumber(e.target.value.toUpperCase())}
+                className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Format: WMMS-CUST-XXXXXX, WMMS-TECH-XXX, WMMS-SUP-XXX, or WMMS-MAN-XXX
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-card-foreground">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
+                disabled={isLoading}
+              />
+            </div>
+            {error && (
+              <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive font-medium" role="alert">
+                  {error}
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-card-foreground">
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+251 9XX XXX XXX"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
-                />
+            )}
+            {/* Debug: Show error state */}
+            {process.env.NODE_ENV === 'development' && error && (
+              <div className="text-xs text-muted-foreground">
+                Debug: Error state = "{error}"
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button onClick={handleSendOtp} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                Send OTP
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="otp" className="text-card-foreground">
-                  Enter OTP
-                </Label>
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="Enter 6-digit code"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  className="bg-input border-border text-card-foreground text-center text-2xl tracking-widest placeholder:text-muted-foreground placeholder:text-base placeholder:tracking-normal"
-                />
-                <p className="text-sm text-muted-foreground">Code sent to {phoneNumber}</p>
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <div className="space-y-2">
-                <Button
-                  onClick={handleVerifyOtp}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    "Verify & Login"
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setStep("phone")}
-                  className="w-full text-muted-foreground hover:text-card-foreground"
-                >
-                  Change Number
-                </Button>
-              </div>
-            </>
-          )}
-          <p className="text-xs text-center text-muted-foreground">Demo: Use any phone number and OTP 123456</p>
+            )}
+            <Button
+              type="submit"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
+          </form>
+          <div className="text-center space-y-2">
+            <Link
+              to="/signup"
+              className="text-sm text-primary hover:underline"
+            >
+              Don't have an account? Sign up
+            </Link>
+            <div>
+              <Link
+                to="/forgot-password"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
