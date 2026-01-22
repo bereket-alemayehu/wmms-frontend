@@ -48,7 +48,7 @@ export const getAllTickets = async (filters?: TicketFilters): Promise<Ticket[]> 
  * Get a single ticket by ID
  */
 export const getTicketById = async (id: string): Promise<Ticket> => {
-  const response = await ticketApiClient.get<{ status: string; data: { ticket: Ticket } }>(
+  const response = await ticketApiClient.get<{ status: string; data: { document: Ticket } }>(
     `/tickets/${id}`,
     {
       headers: {
@@ -56,7 +56,7 @@ export const getTicketById = async (id: string): Promise<Ticket> => {
       },
     }
   )
-  return response.data.data.ticket
+  return response.data.data.document
 }
 
 /**

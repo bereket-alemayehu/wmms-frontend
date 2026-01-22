@@ -14,10 +14,11 @@ import {
 } from '../api/ticket'
 import type { TicketFilters } from '../types'
 
-export const useTickets = (filters?: TicketFilters) => {
+export const useTickets = (filters?: TicketFilters, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.tickets.list(filters || {}),
     queryFn: () => getAllTickets(filters),
+    enabled,
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
@@ -26,10 +27,11 @@ export const useTickets = (filters?: TicketFilters) => {
  * Hook for fetching customer's own tickets
  * Uses backend route: GET /tickets/customer/my-tickets
  */
-export const useCustomerTickets = () => {
+export const useCustomerTickets = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.tickets.list({ customer: 'me' }),
     queryFn: () => getTicketsByCustomer(),
+    enabled,
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
@@ -38,10 +40,11 @@ export const useCustomerTickets = () => {
  * Hook for fetching technician's assigned tickets
  * Uses backend route: GET /tickets/technician/my-tickets
  */
-export const useTechnicianTickets = (status?: string) => {
+export const useTechnicianTickets = (status?: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.tickets.list({ technician: 'me', status }),
     queryFn: () => getTicketsByTechnician(status),
+    enabled,
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
@@ -50,11 +53,11 @@ export const useTechnicianTickets = (status?: string) => {
  * Hook for fetching office tickets
  * Uses backend route: GET /tickets/office/:officeId/tickets
  */
-export const useOfficeTickets = (officeId?: string, status?: string) => {
+export const useOfficeTickets = (officeId?: string, status?: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.tickets.list({ officeId, status }),
     queryFn: () => getTicketsByOffice(officeId!, status),
-    enabled: !!officeId,
+    enabled: enabled && !!officeId, // Requires both enabled flag and valid officeId
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }

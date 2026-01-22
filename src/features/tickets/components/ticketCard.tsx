@@ -3,6 +3,7 @@
  * Displays a ticket in card format with status, details, and actions
  */
 
+import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -40,11 +41,15 @@ export function TicketCard({
   onAction, 
   actions 
 }: TicketCardProps) {
+  const navigate = useNavigate()
   const createdDate = new Date(ticket.createdAt)
   const daysOpen = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
 
   return (
-    <Card className="bg-card border-border hover:border-primary/30 transition-colors">
+    <Card 
+      className="bg-card border-border hover:border-primary/30 transition-colors cursor-pointer"
+      onClick={() => navigate(`/dashboard/tickets/${ticket._id}`)}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 flex-1">
@@ -116,7 +121,10 @@ export function TicketCard({
               key={a.action}
               size="sm"
               variant={a.variant || "default"}
-              onClick={() => onAction(a.action, ticket._id)}
+              onClick={(e) => {
+                e.stopPropagation()
+                onAction(a.action, ticket._id)
+              }}
               disabled={a.disabled}
               className={a.variant === "default" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
             >

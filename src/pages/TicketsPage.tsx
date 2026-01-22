@@ -16,11 +16,12 @@ export function TicketsPage() {
   if (!user) return null;
   const role = user.role;
 
-  // Use role-specific hooks based on backend routes
-  const customerQuery = useCustomerTickets();
-  const technicianQuery = useTechnicianTickets();
-  const officeQuery = useOfficeTickets(user.officeId);
-  const managerQuery = useTickets();
+  // Use role-specific hooks - all hooks called unconditionally (Rules of Hooks)
+  // But only the relevant one is enabled to avoid unauthorized API calls
+  const customerQuery = useCustomerTickets(role === "customer");
+  const technicianQuery = useTechnicianTickets(undefined, role === "technician");
+  const officeQuery = useOfficeTickets(user.officeId, undefined, role === "supervisor");
+  const managerQuery = useTickets(undefined, role === "manager");
 
   // Select the appropriate query based on role
   const { data: tickets = [], isLoading, error } = useMemo(() => {
