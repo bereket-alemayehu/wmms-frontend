@@ -8,7 +8,7 @@ import { Wifi, Loader2 } from "lucide-react"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 
 export function LoginForm() {
-  const { login, isLoading } = useAuth()
+  const { login, isLoggingIn } = useAuth()
   const navigate = useNavigate()
   const [serviceNumber, setServiceNumber] = useState("")
   const [password, setPassword] = useState("")
@@ -24,9 +24,7 @@ export function LoginForm() {
     }
 
     try {
-      console.log('Attempting login with:', { serviceNumber })
       const result = await login(serviceNumber, password)
-      console.log('Login result:', result)
       
       if (result.success) {
         // Cookie is automatically set by backend
@@ -35,13 +33,10 @@ export function LoginForm() {
       } else {
         // Display error message from backend
         const errorMsg = result.error || "Login failed. Please try again."
-        console.log('Login failed, setting error:', errorMsg)
         setError(errorMsg)
-        console.log('Error state after setError:', errorMsg)
       }
     } catch (err) {
       // Fallback error handling
-      console.error('Unexpected login error in form:', err)
       setError("An unexpected error occurred. Please try again.")
     }
   }
@@ -71,7 +66,7 @@ export function LoginForm() {
                 value={serviceNumber}
                 onChange={(e) => setServiceNumber(e.target.value.toUpperCase())}
                 className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
-                disabled={isLoading}
+                disabled={isLoggingIn}
               />
               <p className="text-xs text-muted-foreground">
                 Format: WMMS-CUST-XXXXXX, WMMS-TECH-XXX, WMMS-SUP-XXX, or WMMS-MAN-XXX
@@ -88,28 +83,22 @@ export function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
-                disabled={isLoading}
+                disabled={isLoggingIn}
               />
             </div>
             {error && (
-              <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 animate-in fade-in slide-in-from-top-2">
                 <p className="text-sm text-destructive font-medium" role="alert">
                   {error}
                 </p>
               </div>
             )}
-            {/* Debug: Show error state */}
-            {process.env.NODE_ENV === 'development' && error && (
-              <div className="text-xs text-muted-foreground">
-                Debug: Error state = "{error}"
-              </div>
-            )}
             <Button
               type="submit"
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={isLoading}
+              disabled={isLoggingIn}
             >
-              {isLoading ? (
+              {isLoggingIn ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Logging in...

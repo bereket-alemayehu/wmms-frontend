@@ -8,7 +8,7 @@ import { Wifi, Loader2 } from "lucide-react"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 
 export function SignupForm() {
-  const { signupInitiate, signupVerifyOtp, isLoading } = useAuth()
+  const { signupInitiate, signupVerifyOtp, isSigningUp } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState<"initiate" | "verify">("initiate")
   const [serviceNumber, setServiceNumber] = useState("")
@@ -86,7 +86,7 @@ export function SignupForm() {
                   value={serviceNumber}
                   onChange={(e) => setServiceNumber(e.target.value.toUpperCase())}
                   className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
-                  disabled={isLoading}
+                  disabled={isSigningUp}
                 />
                 <p className="text-xs text-muted-foreground">
                   Only customer accounts (WMMS-CUST-XXXXXX) can sign up
@@ -103,7 +103,7 @@ export function SignupForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
-                  disabled={isLoading}
+                  disabled={isSigningUp}
                 />
                 <p className="text-xs text-muted-foreground">
                   Must be at least 8 characters with uppercase, lowercase, number, and special character
@@ -120,16 +120,22 @@ export function SignupForm() {
                   value={passwordConfirm}
                   onChange={(e) => setPasswordConfirm(e.target.value)}
                   className="bg-input border-border text-card-foreground placeholder:text-muted-foreground"
-                  disabled={isLoading}
+                  disabled={isSigningUp}
                 />
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 animate-in fade-in slide-in-from-top-2">
+                  <p className="text-sm text-destructive font-medium" role="alert">
+                    {error}
+                  </p>
+                </div>
+              )}
               <Button
                 type="submit"
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={isLoading}
+                disabled={isSigningUp}
               >
-                {isLoading ? (
+                {isSigningUp ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Sending OTP...
@@ -161,17 +167,23 @@ export function SignupForm() {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                   className="bg-input border-border text-card-foreground text-center text-2xl tracking-widest placeholder:text-muted-foreground placeholder:text-base placeholder:tracking-normal"
-                  disabled={isLoading}
+                  disabled={isSigningUp}
                 />
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 animate-in fade-in slide-in-from-top-2">
+                  <p className="text-sm text-destructive font-medium" role="alert">
+                    {error}
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Button
                   type="submit"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={isLoading}
+                  disabled={isSigningUp}
                 >
-                  {isLoading ? (
+                  {isSigningUp ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Verifying...
@@ -189,7 +201,7 @@ export function SignupForm() {
                     setError("")
                   }}
                   className="w-full text-muted-foreground hover:text-card-foreground"
-                  disabled={isLoading}
+                  disabled={isSigningUp}
                 >
                   Back
                 </Button>
