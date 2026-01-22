@@ -1,33 +1,45 @@
-import { useState, useMemo } from "react"
-import { useAuth } from "@/features/auth/hooks/useAuth"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Users, Phone, MapPin, Search, Filter } from "lucide-react"
-import { mockTickets, mockUsers, mockOffices } from "@/lib/mock-data"
-import { cn } from "@/lib/utils"
+import { useState, useMemo } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Users, Phone, MapPin, Search, Filter } from "lucide-react";
+import { mockTickets, mockUsers } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import { useOffices } from "@/features/offices/hooks/useOffices";
 
 export function TechniciansPage() {
-  const { user } = useAuth()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "busy">("all")
+  const { user } = useAuth();
+  const { offices } = useOffices();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "available" | "busy"
+  >("all");
 
-  if (!user) return null
+  if (!user) return null;
 
-  const technicians = mockUsers.filter((u) => u.role === "technician" && u.officeId === user.officeId)
-  const office = mockOffices.find((o) => o._id === user.officeId)
+  const technicians = mockUsers.filter(
+    (u) => u.role === "technician" && u.officeId === user.officeId,
+  );
+  const office = offices.find((o) => o._id === user.officeId);
 
   const techniciansWithStats = useMemo(() => {
     return technicians.map((tech) => {
       const assignedTickets = mockTickets.filter(
-        (t) => t.assignedTo === tech._id && ["Assigned", "In Progress"].includes(t.status),
-      )
+        (t) =>
+          t.assignedTo === tech._id &&
+          ["Assigned", "In Progress"].includes(t.status),
+      );
       const resolvedTickets = mockTickets.filter(
-        (t) => t.assignedTo === tech._id && ["Resolved", "Closed"].includes(t.status),
-      )
-      const inProgressTickets = mockTickets.filter((t) => t.assignedTo === tech._id && t.status === "In Progress")
+        (t) =>
+          t.assignedTo === tech._id &&
+          ["Resolved", "Closed"].includes(t.status),
+      );
+      const inProgressTickets = mockTickets.filter(
+        (t) => t.assignedTo === tech._id && t.status === "In Progress",
+      );
 
       return {
         ...tech,
@@ -35,12 +47,12 @@ export function TechniciansPage() {
         resolvedCount: resolvedTickets.length,
         inProgressCount: inProgressTickets.length,
         isAvailable: assignedTickets.length < 3,
-      }
-    })
-  }, [technicians])
+      };
+    });
+  }, [technicians]);
 
   const filteredTechnicians = useMemo(() => {
-    let filtered = techniciansWithStats
+    let filtered = techniciansWithStats;
 
     // Filter by search query
     if (searchQuery) {
@@ -48,26 +60,26 @@ export function TechniciansPage() {
         (tech) =>
           tech.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           tech.phoneNumber.includes(searchQuery),
-      )
+      );
     }
 
     // Filter by status
     if (statusFilter === "available") {
-      filtered = filtered.filter((tech) => tech.isAvailable)
+      filtered = filtered.filter((tech) => tech.isAvailable);
     } else if (statusFilter === "busy") {
-      filtered = filtered.filter((tech) => !tech.isAvailable)
+      filtered = filtered.filter((tech) => !tech.isAvailable);
     }
 
-    return filtered
-  }, [techniciansWithStats, searchQuery, statusFilter])
+    return filtered;
+  }, [techniciansWithStats, searchQuery, statusFilter]);
 
   const getInitials = (name: string) => {
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
-      .toUpperCase()
-  }
+      .toUpperCase();
+  };
 
   return (
     <div className="space-y-6">
@@ -75,7 +87,9 @@ export function TechniciansPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Technicians</h1>
-          <p className="text-muted-foreground">Manage and monitor your team of technicians</p>
+          <p className="text-muted-foreground">
+            Manage and monitor your team of technicians
+          </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Users className="w-4 h-4" />
@@ -98,7 +112,11 @@ export function TechniciansPage() {
           <Button
             variant={statusFilter === "all" ? "default" : "outline"}
             onClick={() => setStatusFilter("all")}
-            className={statusFilter === "all" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+            className={
+              statusFilter === "all"
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : ""
+            }
           >
             <Filter className="w-4 h-4 mr-2" />
             All
@@ -106,14 +124,22 @@ export function TechniciansPage() {
           <Button
             variant={statusFilter === "available" ? "default" : "outline"}
             onClick={() => setStatusFilter("available")}
-            className={statusFilter === "available" ? "bg-success text-success-foreground hover:bg-success/90" : ""}
+            className={
+              statusFilter === "available"
+                ? "bg-success text-success-foreground hover:bg-success/90"
+                : ""
+            }
           >
             Available
           </Button>
           <Button
             variant={statusFilter === "busy" ? "default" : "outline"}
             onClick={() => setStatusFilter("busy")}
-            className={statusFilter === "busy" ? "bg-warning text-warning-foreground hover:bg-warning/90" : ""}
+            className={
+              statusFilter === "busy"
+                ? "bg-warning text-warning-foreground hover:bg-warning/90"
+                : ""
+            }
           >
             Busy
           </Button>
@@ -124,7 +150,9 @@ export function TechniciansPage() {
       {filteredTechnicians.length === 0 ? (
         <div className="text-center py-16 bg-card border border-border rounded-lg">
           <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium text-foreground mb-2">No technicians found</p>
+          <p className="text-lg font-medium text-foreground mb-2">
+            No technicians found
+          </p>
           <p className="text-sm text-muted-foreground">
             {searchQuery || statusFilter !== "all"
               ? "Try adjusting your search or filters."
@@ -134,7 +162,10 @@ export function TechniciansPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTechnicians.map((tech) => (
-            <Card key={tech._id} className="bg-card border-border hover:border-primary/30 transition-colors">
+            <Card
+              key={tech._id}
+              className="bg-card border-border hover:border-primary/30 transition-colors"
+            >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3 flex-1">
@@ -144,8 +175,12 @@ export function TechniciansPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg text-card-foreground truncate">{tech.fullName}</CardTitle>
-                      <p className="text-sm text-muted-foreground truncate">{tech.phoneNumber}</p>
+                      <CardTitle className="text-lg text-card-foreground truncate">
+                        {tech.fullName}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {tech.phoneNumber}
+                      </p>
                     </div>
                   </div>
                   <Badge
@@ -163,25 +198,29 @@ export function TechniciansPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Office Location */}
-                {office && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{office.branchName}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="w-4 h-4" />
+                  <span>{office?.branchName || "Unknown office"}</span>
+                </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
                   <div className="text-center p-2 bg-secondary rounded-lg">
-                    <p className="text-lg font-bold text-secondary-foreground">{tech.assignedCount}</p>
+                    <p className="text-lg font-bold text-secondary-foreground">
+                      {tech.assignedCount}
+                    </p>
                     <p className="text-xs text-muted-foreground">Assigned</p>
                   </div>
                   <div className="text-center p-2 bg-secondary rounded-lg">
-                    <p className="text-lg font-bold text-secondary-foreground">{tech.inProgressCount}</p>
+                    <p className="text-lg font-bold text-secondary-foreground">
+                      {tech.inProgressCount}
+                    </p>
                     <p className="text-xs text-muted-foreground">In Progress</p>
                   </div>
                   <div className="text-center p-2 bg-secondary rounded-lg">
-                    <p className="text-lg font-bold text-secondary-foreground">{tech.resolvedCount}</p>
+                    <p className="text-lg font-bold text-secondary-foreground">
+                      {tech.resolvedCount}
+                    </p>
                     <p className="text-xs text-muted-foreground">Resolved</p>
                   </div>
                 </div>
@@ -212,24 +251,35 @@ export function TechniciansPage() {
               <p className="text-2xl font-bold text-secondary-foreground">
                 {techniciansWithStats.filter((t) => t.isAvailable).length}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">Available Technicians</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Available Technicians
+              </p>
             </div>
             <div className="text-center p-4 bg-secondary rounded-lg">
               <p className="text-2xl font-bold text-secondary-foreground">
-                {techniciansWithStats.reduce((sum, t) => sum + t.assignedCount, 0)}
+                {techniciansWithStats.reduce(
+                  (sum, t) => sum + t.assignedCount,
+                  0,
+                )}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">Total Active Tasks</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Total Active Tasks
+              </p>
             </div>
             <div className="text-center p-4 bg-secondary rounded-lg">
               <p className="text-2xl font-bold text-secondary-foreground">
-                {techniciansWithStats.reduce((sum, t) => sum + t.resolvedCount, 0)}
+                {techniciansWithStats.reduce(
+                  (sum, t) => sum + t.resolvedCount,
+                  0,
+                )}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">Total Resolved</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Total Resolved
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

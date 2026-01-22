@@ -19,6 +19,7 @@ import { MyRefundsPage } from '@/pages/MyRefundsPage'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { queryClient } from '@/lib/react-query'
 import '@/styles/globals.css'
+import { OfficesPage } from './pages/OfficesPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -33,10 +34,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -52,10 +53,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
 
 function AppRoutes() {
@@ -138,6 +139,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/dashboard/offices"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <OfficesPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dashboard/refunds"
         element={
           <ProtectedRoute>
@@ -170,7 +181,7 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  )
+  );
 }
 
 function App() {
@@ -185,8 +196,7 @@ function App() {
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
-  )
+  );
 }
 
-export default App
-
+export default App;
