@@ -57,4 +57,14 @@ export const refundsApi = {
   remove: async (id: string): Promise<void> => {
     await apiClient.delete(`/refunds/${id}`);
   },
+
+  canApprove: async (id: string): Promise<{
+    canApprove: boolean;
+    ticketStatus: string;
+    refundStatus: string;
+    message: string;
+  }> => {
+    const response = await apiClient.get(`/refunds/${id}/can-approve`);
+    return response.data.data;
+  },
 };

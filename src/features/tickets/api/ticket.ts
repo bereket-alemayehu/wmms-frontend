@@ -88,6 +88,30 @@ export const requestRefund = async (id: string): Promise<Ticket> => {
 }
 
 /**
+ * Confirm ticket resolution (Customer closes resolved ticket)
+ * Backend: POST /tickets/:id/confirm-resolution
+ */
+export const confirmTicketResolution = async (id: string): Promise<Ticket> => {
+  const response = await apiClient.post<{ status: string; data: { ticket: Ticket } }>(
+    `/tickets/${id}/confirm-resolution`,
+    {}
+  )
+  return response.data.data.ticket
+}
+
+/**
+ * Mark ticket as not resolved (Customer changes status back to In Progress)
+ * Backend: POST /tickets/:id/not-resolved
+ */
+export const markTicketNotResolved = async (id: string): Promise<Ticket> => {
+  const response = await apiClient.post<{ status: string; data: { ticket: Ticket } }>(
+    `/tickets/${id}/not-resolved`,
+    {}
+  )
+  return response.data.data.ticket
+}
+
+/**
  * Get tickets by office
  * Backend: GET /tickets/office/tickets
  * Note: Backend automatically determines office from logged-in user's token
