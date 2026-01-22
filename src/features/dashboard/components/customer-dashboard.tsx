@@ -1,64 +1,45 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { StatsCard } from "./stats-card";
-import { TicketCard } from "@/features/tickets/components/ticket-card";
+import { TicketCard } from "@/features/tickets/components/ticketCard";
 import { OutageCard } from "@/features/outages/components/outage-card";
-import { CreateTicketDialog } from "@/features/tickets/components/create-ticket-dialog";
-import { mockTickets, mockOutages, mockRefunds } from "@/lib/mock-data";
+import { CreateTicketDialog } from "@/features/tickets/components/createTicketDialog";
+import { useCustomerTickets } from "@/features/tickets/hooks";
+import { mockOutages, mockRefunds } from "@/lib/mock-data";
 import {
   Ticket,
   AlertTriangle,
   Clock,
   CheckCircle,
   DollarSign,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { TicketCategory } from "@/features/tickets/types";
 
 export function CustomerDashboard() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState(
-    mockTickets.filter((t) => t.customerId === user?._id)
+  
+  // Fetch customer's own tickets using specific backend route
+  const { data: tickets = [], isLoading } = useCustomerTickets();
+
+  // Calculate stats
+  const openTickets = useMemo(
+    () => tickets.filter((t) => !["Resolved", "Closed"].includes(t.status)),
+    [tickets]
+  );
+  
+  const resolvedTickets = useMemo(
+    () => tickets.filter((t) => ["Resolved", "Closed"].includes(t.status)),
+    [tickets]
   );
 
+  // Temporary mock data (will be replaced with real API calls)
   const activeOutages = mockOutages.filter((o) => o.status === "Active");
-  const openTickets = tickets.filter(
-    (t) => !["Resolved", "Closed"].includes(t.status)
-  );
-  const resolvedTickets = tickets.filter((t) =>
-    ["Resolved", "Closed"].includes(t.status)
-  );
   const customerRefunds = mockRefunds.filter((r) => r.customerId === user?._id);
-  const approvedRefunds = customerRefunds.filter(
-    (r) => r.status === "Approved"
-  );
-  const totalRefundAmount = approvedRefunds.reduce(
-    (sum, r) => sum + r.amount,
-    0
-  );
-
-  const handleCreateTicket = async (data: {
-    category: TicketCategory;
-    description: string;
-    officeId: string;
-  }) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const newTicket = {
-      _id: `ticket${Date.now()}`,
-      customerId: user!._id,
-      officeId: data.officeId,
-      category: data.category,
-      description: data.description,
-      status: "Pending" as const,
-      refundEligible: false,
-      refundRequested: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setTickets((prev) => [newTicket, ...prev]);
-  };
+  const approvedRefunds = customerRefunds.filter((r) => r.status === "Approved");
+  const totalRefundAmount = approvedRefunds.reduce((sum, r) => sum + r.amount, 0);
 
   return (
     <div className="space-y-8">
@@ -72,7 +53,7 @@ export function CustomerDashboard() {
             Track your support tickets and service status
           </p>
         </div>
-        <CreateTicketDialog onSubmit={handleCreateTicket} />
+        <CreateTicketDialog />
       </div>
 
       {/* Active Outages Banner */}
@@ -233,7 +214,11 @@ export function CustomerDashboard() {
         <h2 className="text-lg font-semibold text-foreground mb-4">
           Your Tickets
         </h2>
-        {tickets.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : tickets.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-lg">
             <Ticket className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">

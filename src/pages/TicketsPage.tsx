@@ -1,73 +1,92 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { TicketCard } from "@/features/tickets/components/ticket-card";
-import { CreateTicketDialog } from "@/features/tickets/components/create-ticket-dialog";
-import { mockTickets } from "@/lib/mock-data";
-import type { Ticket, TicketCategory } from "@/features/tickets/types";
-import { AlertTriangle, Ticket as TicketIcon } from "lucide-react";
+import { TicketCard } from "@/features/tickets/components/ticketCard";
+import { CreateTicketDialog } from "@/features/tickets/components/createTicketDialog";
+import { 
+  useTickets, 
+  useCustomerTickets, 
+  useTechnicianTickets, 
+  useOfficeTickets 
+} from "@/features/tickets/hooks";
+import { AlertTriangle, Ticket as TicketIcon, Loader2 } from "lucide-react";
 
 export function TicketsPage() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState<Ticket[]>(
-    mockTickets.filter((t) => {
-      if (user?.role === "customer") return t.customerId === user._id;
-      if (user?.role === "technician") return t.assignedTo === user._id;
-      if (user?.role === "supervisor") return t.officeId === user.officeId;
-      return true;
-    })
-  );
+  
   if (!user) return null;
   const role = user.role;
 
-  const sections =
-    role === "customer"
-      ? [{ title: "Your Tickets", tickets }]
-      : [
-          {
-            title: "Pending",
-            tickets: tickets.filter((t) => t.status === "Pending"),
-          },
-          {
-            title: "Assigned",
-            tickets: tickets.filter((t) => t.status === "Assigned"),
-          },
-          {
-            title: "In Progress",
-            tickets: tickets.filter((t) => t.status === "In Progress"),
-          },
-          {
-            title: "Resolved / Closed",
-            tickets: tickets.filter((t) =>
-              ["Resolved", "Closed"].includes(t.status)
-            ),
-          },
-        ];
+  // Use role-specific hooks based on backend routes
+  const customerQuery = useCustomerTickets();
+  const technicianQuery = useTechnicianTickets();
+  const officeQuery = useOfficeTickets(user.officeId);
+  const managerQuery = useTickets();
 
-  const handleCreateTicket = async (data: {
-    category: TicketCategory;
-    description: string;
-    officeId: string;
-  }) => {
-    await new Promise((r) => setTimeout(r, 500));
-    const newTicket: Ticket = {
-      _id: `ticket-${Date.now()}`,
-      customerId: user._id,
-      officeId: data.officeId,
-      category: data.category,
-      description: data.description,
-      status: "Pending",
-      refundEligible: false,
-      refundRequested: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setTickets((prev) => [newTicket, ...prev]);
-  };
+  // Select the appropriate query based on role
+  const { data: tickets = [], isLoading, error } = useMemo(() => {
+    if (role === "customer") return customerQuery;
+    if (role === "technician") return technicianQuery;
+    if (role === "supervisor") return officeQuery;
+    return managerQuery;
+  }, [role, customerQuery, technicianQuery, officeQuery, managerQuery]);
+
+  const sections = useMemo(() => {
+    if (role === "customer") {
+      return [{ title: "Your Tickets", tickets }];
+    }
+    return [
+      {
+        title: "Pending",
+        tickets: tickets.filter((t) => t.status === "Pending"),
+      },
+      {
+        title: "Assigned",
+        tickets: tickets.filter((t) => t.status === "Assigned"),
+      },
+      {
+        title: "In Progress",
+        tickets: tickets.filter((t) => t.status === "In Progress"),
+      },
+      {
+        title: "Resolved / Closed",
+        tickets: tickets.filter((t) =>
+          ["Resolved", "Closed"].includes(t.status)
+        ),
+      },
+    ];
+  }, [role, tickets]);
 
   const showCustomer = useMemo(
     () => role === "supervisor" || role === "manager",
     [role]
   );
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading tickets...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <AlertTriangle className="w-12 h-12 text-destructive" />
+          <h2 className="text-xl font-semibold">Failed to load tickets</h2>
+          <p className="text-muted-foreground">
+            {error instanceof Error ? error.message : "An error occurred while fetching tickets"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -79,7 +98,7 @@ export function TicketsPage() {
           </p>
         </div>
         {role === "customer" ? (
-          <CreateTicketDialog onSubmit={handleCreateTicket} />
+          <CreateTicketDialog />
         ) : (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TicketIcon className="w-4 h-4" />

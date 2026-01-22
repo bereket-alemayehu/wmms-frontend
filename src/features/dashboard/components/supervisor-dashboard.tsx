@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { StatsCard } from "./stats-card"
-import { TicketCard } from "@/features/tickets/components/ticket-card"
+import { TicketCard } from "@/features/tickets/components/ticketCard"
+import { useOfficeTickets, useAssignTicket } from "@/features/tickets/hooks"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,14 +15,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Ticket, Users, AlertTriangle, Clock, Plus } from "lucide-react"
-import { mockTickets, mockUsers, mockOutages } from "@/lib/mock-data"
+import { Ticket, Users, AlertTriangle, Clock, Plus, Loader2 } from "lucide-react"
+import { mockUsers, mockOutages } from "@/lib/mock-data"
 import { PostOutageDialog } from "@/features/outages/components/post-outage-dialog"
 import type { Outage } from "@/lib/types"
 
 export function SupervisorDashboard() {
   const { user } = useAuth()
-  const [tickets, setTickets] = useState(mockTickets)
+  
+  // Fetch office tickets using specific backend route
+  const { data: tickets = [], isLoading } = useOfficeTickets(user?.officeId)
+  const assignTicketMutation = useAssignTicket()
+  
   const [outages, setOutages] = useState<Outage[]>(mockOutages)
   const [assignDialog, setAssignDialog] = useState<{ open: boolean; ticketId: string | null }>({
     open: false,
@@ -30,23 +35,38 @@ export function SupervisorDashboard() {
   const [outageDialog, setOutageDialog] = useState(false)
   const [selectedTechnician, setSelectedTechnician] = useState("")
 
+  // Filter data
   const technicians = mockUsers.filter((u) => u.role === "technician" && u.officeId === user?.officeId)
-  const pendingTickets = tickets.filter((t) => t.status === "Pending" && t.officeId === user?.officeId)
-  const assignedTickets = tickets.filter((t) => t.status === "Assigned" && t.officeId === user?.officeId)
-  const inProgressTickets = tickets.filter((t) => t.status === "In Progress" && t.officeId === user?.officeId)
+  
+  const pendingTickets = useMemo(
+    () => tickets.filter((t) => t.status === "Pending"),
+    [tickets]
+  )
+  
+  const assignedTickets = useMemo(
+    () => tickets.filter((t) => t.status === "Assigned"),
+    [tickets]
+  )
+  
+  const inProgressTickets = useMemo(
+    () => tickets.filter((t) => t.status === "In Progress"),
+    [tickets]
+  )
+  
   const activeOutages = outages.filter((o) => o.status === "Active" && o.officeId === user?.officeId)
 
   const handleAssign = () => {
     if (!assignDialog.ticketId || !selectedTechnician) return
-    setTickets((prev) =>
-      prev.map((t) =>
-        t._id === assignDialog.ticketId
-          ? { ...t, status: "Assigned", assignedTo: selectedTechnician, updatedAt: new Date().toISOString() }
-          : t,
-      ),
-    )
-    setAssignDialog({ open: false, ticketId: null })
-    setSelectedTechnician("")
+    
+    assignTicketMutation.mutate({
+      ticketId: assignDialog.ticketId,
+      data: { technicianId: selectedTechnician }
+    }, {
+      onSuccess: () => {
+        setAssignDialog({ open: false, ticketId: null })
+        setSelectedTechnician("")
+      }
+    })
   }
 
   const handleTicketAction = (action: string, ticketId: string) => {
@@ -168,7 +188,11 @@ export function SupervisorDashboard() {
       {/* Pending Tickets */}
       <section>
         <h2 className="text-lg font-semibold text-foreground mb-4">Pending Tickets</h2>
-        {pendingTickets.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : pendingTickets.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-lg">
             <Ticket className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No pending tickets. All caught up!</p>
@@ -224,10 +248,17 @@ export function SupervisorDashboard() {
             </Button>
             <Button
               onClick={handleAssign}
-              disabled={!selectedTechnician}
+              disabled={!selectedTechnician || assignTicketMutation.isPending}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Assign
+              {assignTicketMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Assigning...
+                </>
+              ) : (
+                "Assign"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
