@@ -4,7 +4,9 @@ import { authApi } from "../api/auth"
 
 interface AuthContextType {
   user: User | null
-  isLoading: boolean
+  isLoading: boolean // For initial auth check
+  isLoggingIn: boolean // For login action
+  isSigningUp: boolean // For signup actions
   login: (serviceNumber: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   signupInitiate: (serviceNumber: string, password: string, passwordConfirm: string) => Promise<{ success: boolean; error?: string; data?: { fullName: string; email: string } }>
@@ -16,7 +18,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true) // Start as true to check auth on mount
+  const [isLoading, setIsLoading] = useState(true) // For initial auth check
+  const [isLoggingIn, setIsLoggingIn] = useState(false) // For login action
+  const [isSigningUp, setIsSigningUp] = useState(false) // For signup actions
 
   const checkAuth = useCallback(async () => {
     try {
@@ -43,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (serviceNumber: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      setIsLoading(true)
+      setIsLoggingIn(true)
       const response = await authApi.login({ serviceNumber, password })
       if (response.status === 'success' && response.data?.user) {
         // Cookie is automatically set by backend
@@ -55,15 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: errorMsg }
       }
     } catch (error: any) {
-      // Log full error for debugging
-      console.error('=== LOGIN ERROR ===')
-      console.error('Error object:', error)
-      console.error('Error response:', error.response)
-      console.error('Error response data:', error.response?.data)
-      console.error('Error message:', error.message)
-      console.error('Error response status:', error.response?.status)
-      console.error('==================')
-      
       // Extract error message from backend response
       let errorMessage = 'Login failed. Please try again.'
       
@@ -87,18 +82,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         errorMessage = error.message
       }
       
-      console.log('Extracted error message:', errorMessage)
-      console.log('Full error response data:', error.response?.data)
-      
       return { success: false, error: errorMessage }
     } finally {
-      setIsLoading(false)
+      setIsLoggingIn(false)
     }
   }, [])
 
   const signupInitiate = useCallback(async (serviceNumber: string, password: string, passwordConfirm: string): Promise<{ success: boolean; error?: string; data?: { fullName: string; email: string } }> => {
     try {
-      setIsLoading(true)
+      setIsSigningUp(true)
       const response = await authApi.signupInitiate({ serviceNumber, password, passwordConfirm })
       if (response.status === 'success' && response.data) {
         return { success: true, data: response.data }
@@ -106,16 +98,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: response.message || 'Signup initiation failed' }
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Signup initiation failed. Please try again.'
+      // Extract error message from backend response
+      let errorMessage = 'Signup initiation failed. Please try again.'
+      
+      if (error.response?.data) {
+        const data = error.response.data
+        if (typeof data.message === 'string' && data.message) {
+          errorMessage = data.message
+        } else if (data.error?.message) {
+          errorMessage = data.error.message
+        } else if (typeof data === 'string') {
+          errorMessage = data
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       return { success: false, error: errorMessage }
     } finally {
-      setIsLoading(false)
+      setIsSigningUp(false)
     }
   }, [])
 
   const signupVerifyOtp = useCallback(async (serviceNumber: string, otp: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      setIsLoading(true)
+      setIsSigningUp(true)
       const response = await authApi.signupVerifyOtp({ serviceNumber, otp })
       if (response.status === 'success' && response.data?.user) {
         // Cookie is automatically set by backend
@@ -125,10 +132,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: response.message || 'OTP verification failed' }
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'OTP verification failed. Please try again.'
+      // Extract error message from backend response
+      let errorMessage = 'OTP verification failed. Please try again.'
+      
+      if (error.response?.data) {
+        const data = error.response.data
+        if (typeof data.message === 'string' && data.message) {
+          errorMessage = data.message
+        } else if (data.error?.message) {
+          errorMessage = data.error.message
+        } else if (typeof data === 'string') {
+          errorMessage = data
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       return { success: false, error: errorMessage }
     } finally {
-      setIsLoading(false)
+      setIsSigningUp(false)
     }
   }, [])
 
@@ -147,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return <AuthContext.Provider value={{ user, isLoading, login, logout, signupInitiate, signupVerifyOtp, checkAuth }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, isLoading, isLoggingIn, isSigningUp, login, logout, signupInitiate, signupVerifyOtp, checkAuth }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
