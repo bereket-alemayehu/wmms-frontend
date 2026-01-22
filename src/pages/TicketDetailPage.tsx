@@ -603,20 +603,27 @@ export function TicketDetailPage() {
               )}
               <div className="flex flex-col gap-1">
                 <span className="text-muted-foreground">Assigned To:</span>
-                {ticket.technician ? (
-                  <>
-                    <span className="text-card-foreground font-medium">
-                      {ticket.technician.fullName}
-                    </span>
-                    {ticket.technician.phoneNumber && (
-                      <span className="text-xs text-muted-foreground">
-                        {ticket.technician.phoneNumber}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-warning">Not assigned yet</span>
-                )}
+                {(() => {
+                  // Handle both technician (populated object) and assignedTo (populated object or string)
+                  const technician = ticket.technician || 
+                    (typeof ticket.assignedTo === 'object' && ticket.assignedTo ? ticket.assignedTo : null);
+                  
+                  if (technician && typeof technician === 'object') {
+                    return (
+                      <>
+                        <span className="text-card-foreground font-medium">
+                          {technician.fullName}
+                        </span>
+                        {technician.phoneNumber && (
+                          <span className="text-xs text-muted-foreground">
+                            {technician.phoneNumber}
+                          </span>
+                        )}
+                      </>
+                    );
+                  }
+                  return <span className="text-warning">Not assigned yet</span>;
+                })()}
               </div>
             </CardContent>
           </Card>
