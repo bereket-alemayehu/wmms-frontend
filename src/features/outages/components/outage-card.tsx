@@ -1,29 +1,47 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, CheckCircle, Clock, MapPin } from "lucide-react"
-import type { Outage } from "../types"
-import { mockOffices } from "@/lib/mock-data"
-import { cn } from "@/lib/utils"
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, CheckCircle, Clock, MapPin } from "lucide-react";
+import type { Outage } from "../types";
+import { cn } from "@/lib/utils";
+import { useOffices } from "@/features/offices/hooks/useOffices";
 
 interface OutageCardProps {
-  outage: Outage
+  outage: Outage;
 }
 
 export function OutageCard({ outage }: OutageCardProps) {
-  const office = mockOffices.find((o) => o._id === outage.officeId)
-  const isActive = outage.status === "Active"
+  const { offices } = useOffices();
+  const office = offices.find((o) => o._id === outage.officeId);
+  const isActive = outage.status === "Active";
 
-  const estimatedDate = outage.estimatedResolution ? new Date(outage.estimatedResolution) : null
+  const estimatedDate = outage.estimatedResolution
+    ? new Date(outage.estimatedResolution)
+    : null;
   const formattedEstimate = estimatedDate
-    ? estimatedDate.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-    : null
+    ? estimatedDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   return (
-    <Card className={cn("border-border", isActive ? "bg-destructive/5 border-destructive/30" : "bg-card")}>
+    <Card
+      className={cn(
+        "border-border",
+        isActive ? "bg-destructive/5 border-destructive/30" : "bg-card",
+      )}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className={cn("p-2 rounded-lg", isActive ? "bg-destructive/20" : "bg-success/20")}>
+            <div
+              className={cn(
+                "p-2 rounded-lg",
+                isActive ? "bg-destructive/20" : "bg-success/20",
+              )}
+            >
               {isActive ? (
                 <AlertTriangle className="w-5 h-5 text-destructive" />
               ) : (
@@ -31,13 +49,13 @@ export function OutageCard({ outage }: OutageCardProps) {
               )}
             </div>
             <div>
-              <h3 className="font-semibold text-card-foreground">{outage.title}</h3>
-              {office && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {office.branchName}
-                </p>
-              )}
+              <h3 className="font-semibold text-card-foreground">
+                {outage.title}
+              </h3>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {office?.branchName || "Unknown office"}
+              </p>
             </div>
           </div>
           <Badge
@@ -56,7 +74,11 @@ export function OutageCard({ outage }: OutageCardProps) {
         <p className="text-sm text-card-foreground">{outage.message}</p>
         <div className="flex flex-wrap gap-2">
           {outage.affectedAreas.map((area) => (
-            <Badge key={area} variant="secondary" className="bg-secondary text-secondary-foreground">
+            <Badge
+              key={area}
+              variant="secondary"
+              className="bg-secondary text-secondary-foreground"
+            >
               {area}
             </Badge>
           ))}
@@ -69,6 +91,5 @@ export function OutageCard({ outage }: OutageCardProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
-

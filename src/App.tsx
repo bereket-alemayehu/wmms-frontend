@@ -1,20 +1,21 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ThemeProvider } from '@/components/common/theme-provider'
-import { AuthProvider } from '@/features/auth/contexts/auth-context'
-import { DashboardLayout } from '@/components/layouts/dashboard-layout'
-import { LoginPage } from '@/pages/LoginPage'
-import { DashboardPage } from '@/pages/DashboardPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { TicketsPage } from '@/pages/TicketsPage'
-import { OutagesPage } from '@/pages/OutagesPage'
-import { TasksPage } from '@/pages/TasksPage'
-import { TechniciansPage } from '@/pages/TechniciansPage'
-import { RefundsPage } from '@/pages/RefundsPage'
-import { AnalyticsPage } from '@/pages/AnalyticsPage'
-import { MyRefundsPage } from '@/pages/MyRefundsPage'
-import { useAuth } from '@/features/auth/hooks/useAuth'
-import '@/styles/globals.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "@/components/common/theme-provider";
+import { AuthProvider } from "@/features/auth/contexts/auth-context";
+import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { LoginPage } from "@/pages/LoginPage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
+import { TicketsPage } from "@/pages/TicketsPage";
+import { OutagesPage } from "@/pages/OutagesPage";
+import { TasksPage } from "@/pages/TasksPage";
+import { TechniciansPage } from "@/pages/TechniciansPage";
+import { RefundsPage } from "@/pages/RefundsPage";
+import { AnalyticsPage } from "@/pages/AnalyticsPage";
+import { MyRefundsPage } from "@/pages/MyRefundsPage";
+import { OfficesPage } from "@/pages/OfficesPage";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import "@/styles/globals.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,26 +24,26 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
-})
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
 
 function AppRoutes() {
@@ -107,6 +108,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/dashboard/offices"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <OfficesPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dashboard/refunds"
         element={
           <ProtectedRoute>
@@ -139,7 +150,7 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  )
+  );
 }
 
 function App() {
@@ -153,8 +164,7 @@ function App() {
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
-  )
+  );
 }
 
-export default App
-
+export default App;
