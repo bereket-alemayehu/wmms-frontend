@@ -12,7 +12,7 @@ import { useOffices } from "@/features/offices/hooks/useOffices";
 
 export function TechniciansPage() {
   const { user } = useAuth();
-  const { offices } = useOffices();
+  const { data: offices = [] } = useOffices();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "available" | "busy"

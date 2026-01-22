@@ -1,8 +1,12 @@
 import { useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useOffices } from "@/features/offices/hooks/useOffices";
-import { officesApi } from "@/features/offices/api/offices";
+import {
+  useOffices,
+  useCreateOffice,
+  useUpdateOffice,
+  useDeleteOffice,
+} from "@/features/offices/hooks";
 import type { Office } from "@/features/offices/types";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +41,14 @@ export function OfficesPage() {
 
 function OfficesPageContent() {
   const { user } = useAuth();
-  const { offices, isLoading, error, refresh } = useOffices();
+  const { data: offices = [], isLoading, error, refetch } = useOffices();
+  const errorMessage =
+    (error as any)?.response?.data?.message ||
+    (error as any)?.message ||
+    (error ? "Failed to load offices" : null);
+  const createOfficeMutation = useCreateOffice();
+  const updateOfficeMutation = useUpdateOffice();
+  const deleteOfficeMutation = useDeleteOffice();
 
   const canCreateOrEdit =
     user?.role === "supervisor" || user?.role === "manager";
@@ -105,13 +116,16 @@ function OfficesPageContent() {
       }
 
       if (editingId) {
-        await officesApi.update(editingId, payload);
+        await updateOfficeMutation.mutateAsync({
+          id: editingId,
+          data: payload,
+        });
       } else {
-        await officesApi.create(payload);
+        await createOfficeMutation.mutateAsync(payload);
       }
 
       resetForm();
-      await refresh();
+      await refetch();
     } catch (e: any) {
       setSubmitError(
         e?.response?.data?.message || e?.message || "Failed to save office",
@@ -132,8 +146,8 @@ function OfficesPageContent() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await officesApi.remove(office._id);
-      await refresh();
+      await deleteOfficeMutation.mutateAsync(office._id);
+      await refetch();
     } catch (e: any) {
       setSubmitError(
         e?.response?.data?.message || e?.message || "Failed to delete office",
@@ -276,7 +290,7 @@ function OfficesPageContent() {
               Loading offices...
             </p>
           ) : error ? (
-            <p className="text-destructive text-center py-8">{error}</p>
+            <p className="text-destructive text-center py-8">{errorMessage}</p>
           ) : offices.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No offices</p>
           ) : (

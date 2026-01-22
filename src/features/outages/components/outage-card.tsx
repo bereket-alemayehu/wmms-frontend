@@ -10,7 +10,7 @@ interface OutageCardProps {
 }
 
 export function OutageCard({ outage }: OutageCardProps) {
-  const { offices } = useOffices();
+  const { data: offices = [] } = useOffices();
   const office = offices.find((o) => o._id === outage.officeId);
   const isActive = outage.status === "Active";
 

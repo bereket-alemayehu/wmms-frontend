@@ -21,7 +21,7 @@ const statusColors: Record<string, string> = {
 
 export function TechnicianDashboard() {
   const { user } = useAuth();
-  const { offices } = useOffices();
+  const { data: offices = [] } = useOffices();
   const [tickets, setTickets] = useState(
     mockTickets.filter(
       (t) =>

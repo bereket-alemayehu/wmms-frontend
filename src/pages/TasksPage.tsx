@@ -31,7 +31,7 @@ const statusColors: Record<string, string> = {
 
 export function TasksPage() {
   const { user } = useAuth();
-  const { offices } = useOffices();
+  const { data: offices = [] } = useOffices();
   const [tickets, setTickets] = useState<Ticket[]>(
     mockTickets.filter((t) => t.assignedTo === user?._id),
   );

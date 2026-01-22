@@ -2,34 +2,44 @@ import { useMemo } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { TicketCard } from "@/features/tickets/components/ticketCard";
 import { CreateTicketDialog } from "@/features/tickets/components/createTicketDialog";
-import { 
-  useTickets, 
-  useCustomerTickets, 
-  useTechnicianTickets, 
-  useOfficeTickets 
+import {
+  useTickets,
+  useCustomerTickets,
+  useTechnicianTickets,
+  useOfficeTickets,
 } from "@/features/tickets/hooks";
 import { AlertTriangle, Ticket as TicketIcon, Loader2 } from "lucide-react";
 
 export function TicketsPage() {
   const { user } = useAuth();
-  
+
   if (!user) return null;
   const role = user.role;
 
   // Use role-specific hooks - all hooks called unconditionally (Rules of Hooks)
   // But only the relevant one is enabled to avoid unauthorized API calls
   const customerQuery = useCustomerTickets(role === "customer");
-  const technicianQuery = useTechnicianTickets(undefined, role === "technician");
-  const officeQuery = useOfficeTickets(undefined, role === "supervisor" || role === "manager");
-  const managerQuery = useTickets(undefined, role === "manager");
+  const technicianQuery = useTechnicianTickets(
+    undefined,
+    role === "technician",
+  );
+  const officeQuery = useOfficeTickets(undefined, false);
+  const staffQuery = useTickets(
+    undefined,
+    role === "supervisor" || role === "manager",
+  );
 
   // Select the appropriate query based on role
-  const { data: tickets = [], isLoading, error } = useMemo(() => {
+  const {
+    data: tickets = [],
+    isLoading,
+    error,
+  } = useMemo(() => {
     if (role === "customer") return customerQuery;
     if (role === "technician") return technicianQuery;
-    if (role === "supervisor" || role === "manager") return officeQuery;
-    return managerQuery;
-  }, [role, customerQuery, technicianQuery, officeQuery, managerQuery]);
+    if (role === "supervisor" || role === "manager") return staffQuery;
+    return officeQuery;
+  }, [role, customerQuery, technicianQuery, staffQuery, officeQuery]);
 
   const sections = useMemo(() => {
     if (role === "customer") {
@@ -51,7 +61,7 @@ export function TicketsPage() {
       {
         title: "Resolved / Closed",
         tickets: tickets.filter((t) =>
-          ["Resolved", "Closed"].includes(t.status)
+          ["Resolved", "Closed"].includes(t.status),
         ),
       },
     ];
@@ -59,7 +69,7 @@ export function TicketsPage() {
 
   const showCustomer = useMemo(
     () => role === "supervisor" || role === "manager",
-    [role]
+    [role],
   );
 
   // Loading state
@@ -82,7 +92,9 @@ export function TicketsPage() {
           <AlertTriangle className="w-12 h-12 text-destructive" />
           <h2 className="text-xl font-semibold">Failed to load tickets</h2>
           <p className="text-muted-foreground">
-            {error instanceof Error ? error.message : "An error occurred while fetching tickets"}
+            {error instanceof Error
+              ? error.message
+              : "An error occurred while fetching tickets"}
           </p>
         </div>
       </div>
