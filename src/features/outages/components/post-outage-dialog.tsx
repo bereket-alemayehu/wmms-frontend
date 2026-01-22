@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, X } from "lucide-react";
-import { mockTickets } from "@/lib/mock-data";
+// Removed mock data import - using real API
 
 // Available zones/areas based on office locations
 const AVAILABLE_ZONES = [
@@ -53,23 +53,15 @@ export function PostOutageDialog({
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
   const [estimatedResolution, setEstimatedResolution] = useState("");
 
-  // Calculate affected customers based on selected zones and office
+  // Calculate affected customers based on selected zones
+  // This is an estimate - in production, you'd match customers to zones based on their service location
   const affectedCustomersCount = useMemo(() => {
     if (selectedZones.length === 0) return 0;
-
-    // Get tickets for customers in the selected office
-    // In a real system, you'd match customers to zones based on their service location
-    // For now, we'll estimate based on tickets in the office
-    const officeTickets = mockTickets.filter((t) => t.officeId === officeId);
-    const uniqueCustomers = new Set(officeTickets.map((t) => t.customerId));
-
-    // Estimate: assume a percentage of customers in the office are in the selected zones
-    // More zones = more customers affected (but with diminishing returns)
+    // Estimate: more zones = more customers affected
     // This is a simplified calculation - in production, you'd have customer zone mapping
-    const baseCount = uniqueCustomers.size;
-    const zoneMultiplier = Math.min(selectedZones.length * 0.3, 0.9); // Cap at 90% max
-    return Math.max(1, Math.round(baseCount * zoneMultiplier));
-  }, [selectedZones, officeId]);
+    const baseEstimate = selectedZones.length * 10; // Rough estimate: 10 customers per zone
+    return Math.max(1, baseEstimate);
+  }, [selectedZones]);
 
   const handleZoneToggle = (zone: string) => {
     setSelectedZones((prev) =>

@@ -1,24 +1,96 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { OutageCard } from "@/features/outages/components/outage-card"
-import { mockOutages } from "@/lib/mock-data"
-import { AlertTriangle, WifiOff } from "lucide-react"
+import { PostOutageDialog } from "@/features/outages/components/post-outage-dialog"
+import { useOutages, useCreateOutage, useUpdateOutage, useDeleteOutage } from "@/features/outages/hooks"
+import { Button } from "@/components/ui/button"
+import { AlertTriangle, WifiOff, Plus, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 export function OutagesPage() {
   const { user } = useAuth()
-  const outages = useMemo(() => {
-    if (!user) return []
-    if (user.role === "customer") return mockOutages
+  const { data: outages = [], isLoading, error } = useOutages()
+  const createOutageMutation = useCreateOutage()
+  const updateOutageMutation = useUpdateOutage()
+  const deleteOutageMutation = useDeleteOutage()
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+
+  // Role-based filtering
+  const filteredOutages = useMemo(() => {
+    if (!user || !outages) return []
+    
+    // Customers see all outages
+    if (user.role === "customer") return outages
+    
+    // Technicians and Supervisors see only their office outages
     if (user.role === "technician" || user.role === "supervisor") {
-      return mockOutages.filter((o) => o.officeId === user.officeId)
+      return outages.filter((o) => {
+        if (!o.officeId) return false
+        const officeId = typeof o.officeId === 'object' && o.officeId !== null 
+          ? o.officeId._id 
+          : o.officeId
+        return officeId === user.officeId
+      })
     }
-    return mockOutages
-  }, [user])
+    
+    // Managers see all outages
+    return outages
+  }, [user, outages])
+
+  // Role-based permissions
+  const canCreate = user?.role === "supervisor" || user?.role === "manager"
+  const canUpdate = user?.role === "supervisor" || user?.role === "manager"
+  const canDelete = user?.role === "manager"
 
   if (!user) return null
 
-  const active = outages.filter((o) => o.status === "Active")
-  const resolved = outages.filter((o) => o.status !== "Active")
+  const active = filteredOutages.filter((o) => o.status === "Active")
+  const resolved = filteredOutages.filter((o) => o.status !== "Active")
+
+  const handleCreateOutage = async (data: {
+    title: string
+    message: string
+    affectedAreas: string[]
+    estimatedResolution?: string
+  }) => {
+    if (!user?.officeId) {
+      toast.error("You must be assigned to an office to create outages")
+      return
+    }
+
+    // officeId is automatically set by backend from authenticated user
+    await createOutageMutation.mutateAsync(data)
+  }
+
+  const handleUpdateOutage = async (id: string, data: { status?: 'Active' | 'Resolved' }) => {
+    await updateOutageMutation.mutateAsync({ id, data })
+  }
+
+  const handleDeleteOutage = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this outage?")) return
+    await deleteOutageMutation.mutateAsync(id)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center py-12">
+          <p className="text-destructive">Failed to load outages</p>
+          <p className="text-sm text-muted-foreground mt-2">{String(error)}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -27,11 +99,31 @@ export function OutagesPage() {
           <h1 className="text-2xl font-bold text-foreground">Outages</h1>
           <p className="text-muted-foreground">Service disruptions and maintenance notices</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <AlertTriangle className="w-4 h-4" />
-          {active.length} active / {outages.length} total
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <AlertTriangle className="w-4 h-4" />
+            {active.length} active / {filteredOutages.length} total
+          </div>
+          {canCreate && (
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-primary text-primary-foreground"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Post Outage
+            </Button>
+          )}
         </div>
       </div>
+
+      {canCreate && (
+        <PostOutageDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSubmit={handleCreateOutage}
+          officeId={user.officeId!}
+        />
+      )}
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
@@ -45,7 +137,12 @@ export function OutagesPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {active.map((outage) => (
-              <OutageCard key={outage._id} outage={outage} />
+              <OutageCard 
+                key={outage._id} 
+                outage={outage}
+                onUpdate={canUpdate ? handleUpdateOutage : undefined}
+                onDelete={canDelete ? handleDeleteOutage : undefined}
+              />
             ))}
           </div>
         )}
@@ -60,7 +157,12 @@ export function OutagesPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {resolved.map((outage) => (
-              <OutageCard key={outage._id} outage={outage} />
+              <OutageCard 
+                key={outage._id} 
+                outage={outage}
+                onUpdate={canUpdate ? handleUpdateOutage : undefined}
+                onDelete={canDelete ? handleDeleteOutage : undefined}
+              />
             ))}
           </div>
         )}

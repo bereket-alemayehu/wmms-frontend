@@ -94,6 +94,11 @@ const navItemsByRole: Record<string, NavItem[]> = {
       href: "/dashboard/tasks",
       icon: <Wrench className="w-5 h-5" />,
     },
+    {
+      label: "Outages",
+      href: "/dashboard/outages",
+      icon: <AlertTriangle className="w-5 h-5" />,
+    },
   ],
   manager: [
     {
@@ -105,6 +110,11 @@ const navItemsByRole: Record<string, NavItem[]> = {
       label: "All Tickets",
       href: "/dashboard/tickets",
       icon: <Ticket className="w-5 h-5" />,
+    },
+    {
+      label: "Outages",
+      href: "/dashboard/outages",
+      icon: <AlertTriangle className="w-5 h-5" />,
     },
     {
       label: "Refunds",

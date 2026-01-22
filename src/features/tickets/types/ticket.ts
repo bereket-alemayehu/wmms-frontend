@@ -13,7 +13,11 @@ export interface Ticket {
   category: TicketCategory
   description?: string
   status: TicketStatus
-  assignedTo?: string
+  assignedTo?: string | {
+    _id: string
+    fullName: string
+    phoneNumber: string
+  }
   refundEligible: boolean
   refundRequested: boolean
   rating?: number

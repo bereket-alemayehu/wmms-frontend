@@ -76,8 +76,11 @@ export type OutageStatus = "Active" | "Resolved";
 
 export interface Outage {
   _id: string;
-  officeId: string;
-  postedBy: string;
+  officeId: string | Office;
+  postedBy?: string | {
+    _id: string;
+    fullName: string;
+  };
   title: string;
   message: string;
   affectedAreas: string[];
