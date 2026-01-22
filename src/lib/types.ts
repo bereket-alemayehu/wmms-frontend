@@ -5,12 +5,12 @@ export type UserRole = "customer" | "supervisor" | "manager" | "technician"
 export interface User {
   _id: string
   fullName: string
-  phoneNumber: string
+  email: string
+  serviceNumber: string
   role: UserRole
-  serviceNumber?: string
   officeId?: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface Office {
