@@ -9,6 +9,7 @@ import { SignupPage } from '@/pages/SignupPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { TicketsPage } from '@/pages/TicketsPage'
+import { TicketDetailPage } from '@/pages/TicketDetailPage'
 import { OutagesPage } from '@/pages/OutagesPage'
 import { TasksPage } from '@/pages/TasksPage'
 import { TechniciansPage } from '@/pages/TechniciansPage'
@@ -92,6 +93,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <TicketsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/tickets/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <TicketDetailPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
