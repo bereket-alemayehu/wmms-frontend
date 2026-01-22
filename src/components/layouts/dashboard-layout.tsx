@@ -73,11 +73,6 @@ const navItemsByRole: Record<string, NavItem[]> = {
       icon: <AlertTriangle className="w-5 h-5" />,
     },
     {
-      label: "Refunds",
-      href: "/dashboard/refunds",
-      icon: <DollarSign className="w-5 h-5" />,
-    },
-    {
       label: "Technicians",
       href: "/dashboard/technicians",
       icon: <Users className="w-5 h-5" />,

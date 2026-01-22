@@ -17,7 +17,7 @@ export function MyRefundsPage() {
 
   if (!user) return null;
 
-  const customerRefunds = refunds.filter((r) => r.customerId === user._id);
+  const customerRefunds = refunds;
   const approvedRefunds = customerRefunds.filter(
     (r) => r.status === "Approved",
   );
@@ -250,7 +250,3 @@ export function MyRefundsPage() {
     </div>
   );
 }
-
-
-
-
