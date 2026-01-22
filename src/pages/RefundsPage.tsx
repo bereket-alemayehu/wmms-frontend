@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useRefunds } from "@/features/refunds/hooks/useRefunds";
 import { refundsApi } from "@/features/refunds/api/refunds";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const statusColors: Record<string, string> = {
   Approved: "bg-success/20 text-success border-success/30",
@@ -16,11 +16,11 @@ const statusColors: Record<string, string> = {
 export function RefundsPage() {
   const { user } = useAuth();
   const { refunds, isLoading, error, refresh } = useRefunds();
-  const canUpdateStatus =
-    user?.role === "supervisor" || user?.role === "manager";
+  const canUpdateStatus = user?.role === "manager";
   const canDelete = user?.role === "manager";
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [approvalEligibility, setApprovalEligibility] = useState<Record<string, boolean>>({});
 
   const updateStatus = async (id: string, status: "Approved" | "Rejected") => {
     if (!canUpdateStatus) return;
@@ -55,6 +55,28 @@ export function RefundsPage() {
       setActionLoadingId(null);
     }
   };
+
+  // Check approval eligibility for all requested refunds
+  useEffect(() => {
+    if (!canUpdateStatus || refunds.length === 0) return;
+
+    const checkEligibility = async () => {
+      const eligibilityMap: Record<string, boolean> = {};
+      for (const refund of refunds) {
+        if (refund.status === "Requested") {
+          try {
+            const result = await refundsApi.canApprove(refund._id);
+            eligibilityMap[refund._id] = result.canApprove;
+          } catch (e) {
+            eligibilityMap[refund._id] = false;
+          }
+        }
+      }
+      setApprovalEligibility(eligibilityMap);
+    };
+
+    checkEligibility();
+  }, [refunds, canUpdateStatus]);
 
   const totalRefundAmount = refunds
     .filter((r) => r.status === "Approved")
@@ -142,9 +164,17 @@ export function RefundsPage() {
                             <>
                               <Button
                                 size="sm"
-                                disabled={isActionLoading}
+                                disabled={
+                                  isActionLoading ||
+                                  !approvalEligibility[refund._id]
+                                }
                                 onClick={() =>
                                   updateStatus(refund._id, "Approved")
+                                }
+                                title={
+                                  !approvalEligibility[refund._id]
+                                    ? "Ticket must be Closed to approve refund"
+                                    : "Approve refund"
                                 }
                               >
                                 Approve

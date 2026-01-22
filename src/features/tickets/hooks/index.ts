@@ -23,4 +23,6 @@ export { useAssignTicket } from './useAssignTicket'
 export { useChangeTicketStatus } from './useChangeTicketStatus'
 export { useSubmitFeedback } from './useSubmitFeedback'
 export { useRequestRefund } from './useRequestRefund'
+export { useConfirmResolution } from './useConfirmResolution'
+export { useMarkNotResolved } from './useMarkNotResolved'
 

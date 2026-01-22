@@ -38,6 +38,8 @@ import {
   useSubmitFeedback,
   useUpdateTicket,
   useChangeTicketStatus,
+  useConfirmResolution,
+  useMarkNotResolved,
 } from "@/features/tickets/hooks"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -65,6 +67,8 @@ export function TicketDetailPage() {
   const changeStatusMutation = useChangeTicketStatus()
   const submitFeedbackMutation = useSubmitFeedback()
   const requestRefundMutation = useRequestRefund()
+  const confirmResolutionMutation = useConfirmResolution()
+  const markNotResolvedMutation = useMarkNotResolved()
 
   // UI state
   const [isEditingDescription, setIsEditingDescription] = useState(false)
@@ -198,6 +202,14 @@ export function TicketDetailPage() {
 
   const handleRequestRefund = () => {
     requestRefundMutation.mutate(ticket._id)
+  }
+
+  const handleConfirmResolution = () => {
+    confirmResolutionMutation.mutate(ticket._id)
+  }
+
+  const handleMarkNotResolved = () => {
+    markNotResolvedMutation.mutate(ticket._id)
   }
 
   return (
@@ -335,10 +347,8 @@ export function TicketDetailPage() {
                       <SelectValue placeholder="Select new status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Assigned">Assigned</SelectItem>
                       <SelectItem value="In Progress">In Progress</SelectItem>
                       <SelectItem value="Resolved">Resolved</SelectItem>
-                      <SelectItem value="Closed">Closed</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
@@ -351,6 +361,56 @@ export function TicketDetailPage() {
                     ) : (
                       "Update Status"
                     )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Confirm Resolution (Customer) */}
+          {isCustomer && ticket.status === "Resolved" && (
+            <Card className="bg-success/5 border-success/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-success" />
+                  Confirm Resolution
+                </CardTitle>
+                <CardDescription>
+                  Your ticket has been marked as resolved. Please confirm if the issue is fixed.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-start gap-2 text-sm text-success">
+                  <AlertCircle className="w-4 h-4 mt-0.5" />
+                  <span>
+                    Once you confirm, this ticket will be closed and no further updates can be made.
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleConfirmResolution}
+                    disabled={confirmResolutionMutation.isPending}
+                    className="flex-1 bg-success text-success-foreground hover:bg-success/90"
+                  >
+                    {confirmResolutionMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <UserCheck className="w-4 h-4 mr-2" />
+                    )}
+                    Confirm & Close
+                  </Button>
+                  <Button
+                    onClick={handleMarkNotResolved}
+                    disabled={markNotResolvedMutation.isPending}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    {markNotResolvedMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                    )}
+                    Not Resolved
                   </Button>
                 </div>
               </CardContent>
