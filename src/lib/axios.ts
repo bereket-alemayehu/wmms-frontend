@@ -1,15 +1,9 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-<<<<<<< HEAD
-<<<<<<< HEAD
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-=======
+
+
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1",
->>>>>>> 9ffea8ff169f00442db9aa4aee7a3f298b906656
-=======
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1",
->>>>>>> 36a77b102d2f6cd0f5e924737ebb281a7572e8fd
   timeout: 10000,
   withCredentials: true, // REQUIRED: Enable cookies to be sent/received
   headers: {
