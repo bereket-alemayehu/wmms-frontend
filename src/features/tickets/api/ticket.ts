@@ -61,9 +61,10 @@ export const getTicketById = async (id: string): Promise<Ticket> => {
 
 /**
  * Create a new ticket
+ * Backend returns "document" not "ticket"
  */
 export const createTicket = async (data: CreateTicketRequest): Promise<Ticket> => {
-  const response = await ticketApiClient.post<{ status: string; data: { ticket: Ticket } }>(
+  const response = await ticketApiClient.post<{ status: string; data: { document: Ticket } }>(
     '/tickets',
     data,
     {
@@ -72,7 +73,7 @@ export const createTicket = async (data: CreateTicketRequest): Promise<Ticket> =
       },
     }
   )
-  return response.data.data.ticket
+  return response.data.data.document
 }
 
 /**

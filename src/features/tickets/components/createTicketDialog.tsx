@@ -1,10 +1,10 @@
 /**
  * Create Ticket Dialog Component
  * Modal dialog for creating new support tickets
+ * Note: customerId and officeId are automatically set by backend from authenticated user
  */
 
 import { useState } from "react"
-import { useAuth } from "@/features/auth/hooks/useAuth"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,27 +22,19 @@ import { Plus, Loader2 } from "lucide-react"
 import type { TicketCategory, CreateTicketRequest } from "../types"
 import { useCreateTicket } from "../hooks"
 
-interface CreateTicketDialogProps {
-  offices?: Array<{ _id: string; branchName: string; location: string }>
-  defaultOfficeId?: string
-}
-
-export function CreateTicketDialog({ offices = [], defaultOfficeId }: CreateTicketDialogProps) {
-  const { user } = useAuth()
+export function CreateTicketDialog() {
   const [open, setOpen] = useState(false)
   const [category, setCategory] = useState<TicketCategory | "">("")
   const [description, setDescription] = useState("")
-  const [officeId, setOfficeId] = useState(defaultOfficeId || user?.officeId || offices[0]?._id || "")
 
   const createTicketMutation = useCreateTicket()
 
-  const handleSubmit = async () => {
-    if (!category || !officeId) return
+  const handleSubmit = () => {
+    if (!category) return
 
     const ticketData: CreateTicketRequest = {
       category,
       description,
-      officeId,
     }
 
     createTicketMutation.mutate(ticketData, {
@@ -89,26 +81,6 @@ export function CreateTicketDialog({ offices = [], defaultOfficeId }: CreateTick
             </Select>
           </div>
 
-          {offices.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="office" className="text-card-foreground">
-                Branch Office
-              </Label>
-              <Select value={officeId} onValueChange={setOfficeId}>
-                <SelectTrigger id="office" className="bg-input border-border text-card-foreground">
-                  <SelectValue placeholder="Select branch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {offices.map((office) => (
-                    <SelectItem key={office._id} value={office._id}>
-                      {office.branchName} - {office.location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           <div className="space-y-2">
             <Label htmlFor="description" className="text-card-foreground">
               Description
@@ -128,7 +100,7 @@ export function CreateTicketDialog({ offices = [], defaultOfficeId }: CreateTick
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!category || !officeId || isLoading}
+            disabled={!category || isLoading}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}

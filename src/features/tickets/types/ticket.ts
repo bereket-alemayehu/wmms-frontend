@@ -44,7 +44,7 @@ export interface Ticket {
 export interface CreateTicketRequest {
   category: TicketCategory
   description: string
-  officeId: string
+  // Note: customerId and officeId are automatically set by backend from authenticated user
 }
 
 export interface UpdateTicketRequest {
