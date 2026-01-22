@@ -140,7 +140,6 @@ export function TicketDetailPage() {
 
   const canUpdate = isSupervisor || isManager || isTechnician
   const canChangeStatus = isTechnician || isSupervisor || isManager
-  const canRequestRefund = isCustomer && refundData?.refundEligible && !ticket.refundRequested
   const canSubmitFeedback = isCustomer && (ticket.status === "Resolved" || ticket.status === "Closed") && !ticket.rating
 
   // Date calculations
@@ -594,8 +593,8 @@ export function TicketDetailPage() {
           </Card>
 
           {/* Refund Status */}
-          {(refundData?.refundEligible || ticket.refundRequested) && (
-            <Card className={refundData?.refundEligible ? "bg-success/5 border-success/30" : ""}>
+          {isCustomer && (
+            <Card className={refundData?.refundEligible && !ticket.refundRequested ? "bg-success/5 border-success/30" : ""}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
@@ -603,32 +602,51 @@ export function TicketDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {refundData?.refundEligible && !ticket.refundRequested && (
+                {ticket.refundRequested ? (
+                  <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30 w-full justify-center">
+                    Refund Requested
+                  </Badge>
+                ) : refundData?.refundEligible ? (
                   <>
                     <div className="flex items-start gap-2 text-sm text-success">
                       <AlertCircle className="w-4 h-4 mt-0.5" />
                       <span>This ticket is eligible for a refund</span>
                     </div>
-                    {canRequestRefund && (
-                      <Button
-                        onClick={handleRequestRefund}
-                        disabled={requestRefundMutation.isPending}
-                        className="w-full bg-success text-success-foreground hover:bg-success/90"
-                      >
-                        {requestRefundMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <DollarSign className="w-4 h-4 mr-2" />
-                        )}
-                        Request Refund
-                      </Button>
-                    )}
+                    <Button
+                      onClick={handleRequestRefund}
+                      disabled={requestRefundMutation.isPending}
+                      className="w-full bg-success text-success-foreground hover:bg-success/90"
+                    >
+                      {requestRefundMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <DollarSign className="w-4 h-4 mr-2" />
+                      )}
+                      Request Refund
+                    </Button>
                   </>
-                )}
-                {ticket.refundRequested && (
-                  <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30 w-full justify-center">
-                    Refund Requested
-                  </Badge>
+                ) : (
+                  <>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <AlertCircle className="w-4 h-4 mt-0.5" />
+                      <span>
+                        {ticket.status === "Pending" || ticket.status === "Assigned" 
+                          ? "Refund will be available if the ticket remains unresolved for an extended period"
+                          : "This ticket is not eligible for a refund"}
+                      </span>
+                    </div>
+                    <Button
+                      disabled
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Request Refund
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Refunds become available for tickets open longer than 7 days
+                    </p>
+                  </>
                 )}
               </CardContent>
             </Card>
