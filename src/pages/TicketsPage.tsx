@@ -20,14 +20,14 @@ export function TicketsPage() {
   // But only the relevant one is enabled to avoid unauthorized API calls
   const customerQuery = useCustomerTickets(role === "customer");
   const technicianQuery = useTechnicianTickets(undefined, role === "technician");
-  const officeQuery = useOfficeTickets(user.officeId, undefined, role === "supervisor");
+  const officeQuery = useOfficeTickets(undefined, role === "supervisor" || role === "manager");
   const managerQuery = useTickets(undefined, role === "manager");
 
   // Select the appropriate query based on role
   const { data: tickets = [], isLoading, error } = useMemo(() => {
     if (role === "customer") return customerQuery;
     if (role === "technician") return technicianQuery;
-    if (role === "supervisor") return officeQuery;
+    if (role === "supervisor" || role === "manager") return officeQuery;
     return managerQuery;
   }, [role, customerQuery, technicianQuery, officeQuery, managerQuery]);
 
