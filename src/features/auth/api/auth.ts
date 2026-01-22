@@ -35,6 +35,13 @@ export interface AuthResponse {
   user: User
 }
 
+export interface UserListResponse {
+  documents?: User[]
+  customers?: User[]
+  technicians?: User[]
+  supervisors?: User[]
+}
+
 export const authApi = {
   // Signup - Step 1: Initiate
   signupInitiate: async (data: SignupInitiateRequest): Promise<ApiResponse<SignupInitiateResponse>> => {
@@ -70,6 +77,31 @@ export const authApi = {
     const response = await apiClient.get<ApiResponse<AuthResponse>>('/auth/me')
     return response.data
   },
+
+  // Get Customers by office
+  getCustomersByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
+    const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/customers', {
+      params: { officeId }
+    })
+    return response.data
+  },
+
+  // Get Technicians by office
+  getTechniciansByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
+    const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/technicians', {
+      params: { officeId }
+    })
+    return response.data
+  },
+
+  // Get Supervisors by office
+  getSupervisorsByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
+    const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/supervisors', {
+      params: { officeId }
+    })
+    return response.data
+  },
+
 
   // Forgot password
   forgotPassword: async (serviceNumber: string): Promise<ApiResponse<null>> => {
