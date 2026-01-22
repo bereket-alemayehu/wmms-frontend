@@ -76,7 +76,7 @@ export interface TicketResponse {
 }
 
 // Filter/Query Types
-export interface TicketFilters {
+export interface TicketFilters extends Record<string, unknown> {
   status?: TicketStatus
   category?: TicketCategory
   officeId?: string

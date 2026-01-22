@@ -16,7 +16,7 @@ import type { TicketFilters } from '../types'
 
 export const useTickets = (filters?: TicketFilters, enabled: boolean = true) => {
   return useQuery({
-    queryKey: queryKeys.tickets.list(filters || {}),
+    queryKey: queryKeys.tickets.list((filters || {}) as Record<string, unknown>),
     queryFn: () => getAllTickets(filters),
     enabled,
     staleTime: 1000 * 60 * 2, // 2 minutes
@@ -51,13 +51,14 @@ export const useTechnicianTickets = (status?: string, enabled: boolean = true) =
 
 /**
  * Hook for fetching office tickets
- * Uses backend route: GET /tickets/office/:officeId/tickets
+ * Uses backend route: GET /tickets/office/tickets
+ * Backend determines office from logged-in user's token
  */
-export const useOfficeTickets = (officeId?: string, status?: string, enabled: boolean = true) => {
+export const useOfficeTickets = (status?: string, enabled: boolean = true) => {
   return useQuery({
-    queryKey: queryKeys.tickets.list({ officeId, status }),
-    queryFn: () => getTicketsByOffice(officeId!, status),
-    enabled: enabled && !!officeId, // Requires both enabled flag and valid officeId
+    queryKey: queryKeys.tickets.list({ office: 'my-office', status }),
+    queryFn: () => getTicketsByOffice(status),
+    enabled,
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
