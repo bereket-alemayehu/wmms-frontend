@@ -20,7 +20,9 @@ export function RefundsPage() {
   const canDelete = user?.role === "manager";
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [approvalEligibility, setApprovalEligibility] = useState<Record<string, boolean>>({});
+  const [approvalEligibility, setApprovalEligibility] = useState<
+    Record<string, boolean>
+  >({});
 
   const updateStatus = async (id: string, status: "Approved" | "Rejected") => {
     if (!canUpdateStatus) return;
@@ -83,6 +85,14 @@ export function RefundsPage() {
     .reduce((sum, r) => sum + r.amount, 0);
   const refundCount = refunds.length;
 
+  // For managers: filter out 'Requested' refunds with no customer (likely seed/test data)
+  let visibleRefunds = refunds;
+  if (user?.role === "manager") {
+    visibleRefunds = refunds.filter(
+      (r) => !(r.status === "Requested" && (!r.customerId || !r.customer)),
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -123,13 +133,13 @@ export function RefundsPage() {
             </p>
           ) : error ? (
             <p className="text-destructive text-center py-8">{error}</p>
-          ) : refunds.length === 0 ? (
+          ) : visibleRefunds.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
               No refunds processed
             </p>
           ) : (
             <div className="space-y-4">
-              {refunds.map((refund) => {
+              {visibleRefunds.map((refund) => {
                 const customer = refund.customer;
                 const ticket = refund.ticket;
                 const isActionLoading = actionLoadingId === refund._id;
@@ -158,51 +168,77 @@ export function RefundsPage() {
                       <p className="text-xs text-muted-foreground font-mono">
                         Ticket #{refund.ticketId.slice(-8).toUpperCase()}
                       </p>
-                      {(canUpdateStatus || canDelete) && (
-                        <div className="pt-2 flex flex-wrap gap-2">
-                          {canUpdateStatus && refund.status === "Requested" && (
-                            <>
-                              <Button
-                                size="sm"
-                                disabled={
-                                  isActionLoading ||
-                                  !approvalEligibility[refund._id]
-                                }
-                                onClick={() =>
-                                  updateStatus(refund._id, "Approved")
-                                }
-                                title={
-                                  !approvalEligibility[refund._id]
-                                    ? "Ticket must be Closed to approve refund"
-                                    : "Approve refund"
-                                }
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={isActionLoading}
-                                onClick={() =>
-                                  updateStatus(refund._id, "Rejected")
-                                }
-                              >
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          {canDelete && (
+                      {/* Only show Approve for manager, never Reject/Delete */}
+                      {user?.role === "manager" &&
+                        refund.status === "Requested" && (
+                          <div className="pt-2 flex flex-wrap gap-2">
                             <Button
                               size="sm"
-                              variant="destructive"
-                              disabled={isActionLoading}
-                              onClick={() => removeRefund(refund._id)}
+                              disabled={
+                                isActionLoading ||
+                                !approvalEligibility[refund._id]
+                              }
+                              onClick={() =>
+                                updateStatus(refund._id, "Approved")
+                              }
+                              title={
+                                !approvalEligibility[refund._id]
+                                  ? "Ticket must be Closed to approve refund"
+                                  : "Approve refund"
+                              }
                             >
-                              Delete
+                              Approve
                             </Button>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        )}
+                      {/* For other roles, keep existing controls */}
+                      {user?.role !== "manager" &&
+                        (canUpdateStatus || canDelete) && (
+                          <div className="pt-2 flex flex-wrap gap-2">
+                            {canUpdateStatus &&
+                              refund.status === "Requested" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    disabled={
+                                      isActionLoading ||
+                                      !approvalEligibility[refund._id]
+                                    }
+                                    onClick={() =>
+                                      updateStatus(refund._id, "Approved")
+                                    }
+                                    title={
+                                      !approvalEligibility[refund._id]
+                                        ? "Ticket must be Closed to approve refund"
+                                        : "Approve refund"
+                                    }
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={isActionLoading}
+                                    onClick={() =>
+                                      updateStatus(refund._id, "Rejected")
+                                    }
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                            {canDelete && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={isActionLoading}
+                                onClick={() => removeRefund(refund._id)}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       {refund.adminComment && (
                         <p className="text-xs text-muted-foreground italic mt-1">
                           {refund.adminComment}
