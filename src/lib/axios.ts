@@ -1,35 +1,29 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1',
   timeout: 10000,
+  withCredentials: true, // REQUIRED: Enable cookies to be sent/received
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// Request interceptor for adding auth tokens
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
+// No need to manually add token - backend uses cookie automatically
+// Backend sets 'jwt' cookie on login/signup, browser sends it automatically
 
 // Response interceptor for handling errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized - clear token and redirect to login
-      localStorage.removeItem('authToken')
-      window.location.href = '/login'
+      // Only redirect if not already on login or signup page
+      const currentPath = window.location.pathname
+      if (currentPath !== '/login' && currentPath !== '/signup' && !currentPath.startsWith('/reset-password')) {
+        // Backend clears cookie automatically
+        // Just redirect to login
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
