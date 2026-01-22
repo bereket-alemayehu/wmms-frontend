@@ -1,33 +1,37 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@/components/common/theme-provider";
-import { AuthProvider } from "@/features/auth/contexts/auth-context";
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { LoginPage } from "@/pages/LoginPage";
-import { DashboardPage } from "@/pages/DashboardPage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
-import { TicketsPage } from "@/pages/TicketsPage";
-import { OutagesPage } from "@/pages/OutagesPage";
-import { TasksPage } from "@/pages/TasksPage";
-import { TechniciansPage } from "@/pages/TechniciansPage";
-import { RefundsPage } from "@/pages/RefundsPage";
-import { AnalyticsPage } from "@/pages/AnalyticsPage";
-import { MyRefundsPage } from "@/pages/MyRefundsPage";
-import { OfficesPage } from "@/pages/OfficesPage";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import "@/styles/globals.css";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { ThemeProvider } from '@/components/common/theme-provider'
+import { AuthProvider } from '@/features/auth/contexts/auth-context'
+import { DashboardLayout } from '@/components/layouts/dashboard-layout'
+import { LoginPage } from '@/pages/LoginPage'
+import { SignupPage } from '@/pages/SignupPage'
+import { DashboardPage } from '@/pages/DashboardPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
+import { TicketsPage } from '@/pages/TicketsPage'
+import { TicketDetailPage } from '@/pages/TicketDetailPage'
+import { OutagesPage } from '@/pages/OutagesPage'
+import { TasksPage } from '@/pages/TasksPage'
+import { TechniciansPage } from '@/pages/TechniciansPage'
+import { RefundsPage } from '@/pages/RefundsPage'
+import { AnalyticsPage } from '@/pages/AnalyticsPage'
+import { MyRefundsPage } from '@/pages/MyRefundsPage'
+import { useAuth } from '@/features/auth/hooks/useAuth'
+import { queryClient } from '@/lib/react-query'
+import '@/styles/globals.css'
+import { OfficesPage } from './pages/OfficesPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth()
+
+  // Wait for auth check to complete
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -37,7 +41,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth()
+
+  // Wait for auth check to complete
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
+  }
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -58,6 +71,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignupPage />
+          </PublicRoute>
+        }
+      />
+      <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
@@ -73,6 +94,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <TicketsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/tickets/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <TicketDetailPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -163,6 +194,7 @@ function App() {
           </BrowserRouter>
         </AuthProvider>
       </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }

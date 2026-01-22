@@ -314,7 +314,8 @@ function UserMenu({
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <p className="font-medium">{user.fullName}</p>
-          <p className="text-xs text-muted-foreground">{user.phoneNumber}</p>
+          <p className="text-xs text-muted-foreground">{user.serviceNumber}</p>
+          <p className="text-xs text-muted-foreground">{user.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
