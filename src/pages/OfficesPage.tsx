@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useOffices } from "@/features/offices/hooks/useOffices";
 import { officesApi } from "@/features/offices/api/offices";
@@ -25,6 +26,17 @@ const emptyForm: OfficeFormState = {
 
 export function OfficesPage() {
   const { user } = useAuth();
+  const canAccessPage = user?.role === "supervisor" || user?.role === "manager";
+
+  if (!canAccessPage) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <OfficesPageContent />;
+}
+
+function OfficesPageContent() {
+  const { user } = useAuth();
   const { offices, isLoading, error, refresh } = useOffices();
 
   const canCreateOrEdit =
@@ -35,13 +47,22 @@ export function OfficesPage() {
   const [form, setForm] = useState<OfficeFormState>(emptyForm);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formContainerRef = useRef<HTMLDivElement | null>(null);
 
   const editingOffice: Office | undefined = useMemo(() => {
     if (!editingId) return undefined;
     return offices.find((o) => o._id === editingId);
   }, [editingId, offices]);
 
+  const resetForm = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setSubmitError(null);
+  };
+
   const startEdit = (office: Office) => {
+    if (!canCreateOrEdit) return;
+
     setSubmitError(null);
     setEditingId(office._id);
     setForm({
@@ -53,12 +74,11 @@ export function OfficesPage() {
           ? String(office.activeTechniciansCount)
           : "",
     });
-  };
 
-  const resetForm = () => {
-    setEditingId(null);
-    setForm(emptyForm);
-    setSubmitError(null);
+    // Make it obvious to the user that edit mode was activated.
+    setTimeout(() => {
+      formContainerRef.current?.scrollIntoView({ block: "start" });
+    }, 0);
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -69,13 +89,13 @@ export function OfficesPage() {
     setSubmitError(null);
 
     try {
-      const activeTechniciansCount = form.activeTechniciansCount.trim();
+      const activeTechniciansCountText = form.activeTechniciansCount.trim();
       const payload = {
         cityName: form.cityName.trim(),
         branchName: form.branchName.trim(),
         location: form.location.trim(),
-        ...(activeTechniciansCount
-          ? { activeTechniciansCount: Number(activeTechniciansCount) }
+        ...(activeTechniciansCountText
+          ? { activeTechniciansCount: Number(activeTechniciansCountText) }
           : {}),
       };
 
@@ -103,6 +123,7 @@ export function OfficesPage() {
 
   const onDelete = async (office: Office) => {
     if (!canDelete) return;
+
     const ok = window.confirm(
       `Delete office "${office.branchName}" in "${office.cityName}"?`,
     );
@@ -112,7 +133,6 @@ export function OfficesPage() {
     setSubmitError(null);
     try {
       await officesApi.remove(office._id);
-      if (editingId === office._id) resetForm();
       await refresh();
     } catch (e: any) {
       setSubmitError(
@@ -136,126 +156,114 @@ export function OfficesPage() {
         </div>
       </div>
 
-      {!canCreateOrEdit && (
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-card-foreground">
-              Office Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              You are logged in as{" "}
-              <span className="font-medium text-foreground">{user?.role}</span>.
-              Only
-              <span className="font-medium text-foreground">
-                {" "}
-                supervisor
-              </span>{" "}
-              or
-              <span className="font-medium text-foreground"> manager</span> can
-              create/edit offices, and only a
-              <span className="font-medium text-foreground"> manager</span> can
-              delete offices.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
       {canCreateOrEdit && (
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-card-foreground">
-              {editingOffice ? "Edit Office" : "Create Office"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={onSubmit} className="space-y-4">
-              {submitError && (
-                <p className="text-sm text-destructive">{submitError}</p>
+        <div ref={formContainerRef}>
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-card-foreground">
+                {editingOffice ? "Edit Office" : "Create Office"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!canDelete && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Note: deleting offices requires a manager account.
+                </p>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cityName">City</Label>
-                  <Input
-                    id="cityName"
-                    value={form.cityName}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, cityName: e.target.value }))
-                    }
-                    placeholder="Addis Ababa"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="branchName">Branch Name</Label>
-                  <Input
-                    id="branchName"
-                    value={form.branchName}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        branchName: e.target.value,
-                      }))
-                    }
-                    placeholder="Bole Branch"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={form.location}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, location: e.target.value }))
-                    }
-                    placeholder="Near XYZ"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="activeTechniciansCount">
-                    Active Technicians
-                  </Label>
-                  <Input
-                    id="activeTechniciansCount"
-                    inputMode="numeric"
-                    value={form.activeTechniciansCount}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        activeTechniciansCount: e.target.value,
-                      }))
-                    }
-                    placeholder="5"
-                    disabled={isSubmitting}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button type="submit" disabled={isSubmitting}>
-                  {editingOffice ? "Save Changes" : "Create Office"}
-                </Button>
-                {editingOffice && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetForm}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
+              <form onSubmit={onSubmit} className="space-y-4">
+                {submitError && (
+                  <p className="text-sm text-destructive">{submitError}</p>
                 )}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cityName">City</Label>
+                    <Input
+                      id="cityName"
+                      value={form.cityName}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          cityName: e.target.value,
+                        }))
+                      }
+                      placeholder="Addis Ababa"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="branchName">Branch Name</Label>
+                    <Input
+                      id="branchName"
+                      value={form.branchName}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          branchName: e.target.value,
+                        }))
+                      }
+                      placeholder="Bole Branch"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={form.location}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          location: e.target.value,
+                        }))
+                      }
+                      placeholder="Near XYZ"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="activeTechniciansCount">
+                      Active Technicians
+                    </Label>
+                    <Input
+                      id="activeTechniciansCount"
+                      inputMode="numeric"
+                      value={form.activeTechniciansCount}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          activeTechniciansCount: e.target.value,
+                        }))
+                      }
+                      placeholder="5"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button type="submit" disabled={isSubmitting}>
+                    {editingOffice ? "Save Changes" : "Create Office"}
+                  </Button>
+                  {editingOffice && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={resetForm}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       <Card className="bg-card border-border">

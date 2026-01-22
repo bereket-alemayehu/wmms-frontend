@@ -55,11 +55,6 @@ const navItemsByRole: Record<string, NavItem[]> = {
       href: "/dashboard/outages",
       icon: <AlertTriangle className="w-5 h-5" />,
     },
-    {
-      label: "Offices",
-      href: "/dashboard/offices",
-      icon: <Users className="w-5 h-5" />,
-    },
   ],
   supervisor: [
     {
@@ -76,6 +71,11 @@ const navItemsByRole: Record<string, NavItem[]> = {
       label: "Outages",
       href: "/dashboard/outages",
       icon: <AlertTriangle className="w-5 h-5" />,
+    },
+    {
+      label: "Refunds",
+      href: "/dashboard/refunds",
+      icon: <DollarSign className="w-5 h-5" />,
     },
     {
       label: "Technicians",
@@ -98,11 +98,6 @@ const navItemsByRole: Record<string, NavItem[]> = {
       label: "Assigned Tasks",
       href: "/dashboard/tasks",
       icon: <Wrench className="w-5 h-5" />,
-    },
-    {
-      label: "Offices",
-      href: "/dashboard/offices",
-      icon: <Users className="w-5 h-5" />,
     },
   ],
   manager: [
