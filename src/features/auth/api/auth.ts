@@ -78,29 +78,9 @@ export const authApi = {
     return response.data
   },
 
-  // Get Customers by office
-  getCustomersByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
-    const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/customers', {
-      params: { officeId }
-    })
-    return response.data
-  },
 
-  // Get Technicians by office
-  getTechniciansByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
-    const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/technicians', {
-      params: { officeId }
-    })
-    return response.data
-  },
 
-  // Get Supervisors by office
-  getSupervisorsByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
-    const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/supervisors', {
-      params: { officeId }
-    })
-    return response.data
-  },
+
 
 
   // Forgot password
