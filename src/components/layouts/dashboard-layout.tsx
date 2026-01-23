@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { ModeToggle } from "@/components/common/mode-toggle";
 
 interface NavItem {
   label: string;
@@ -164,7 +165,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <Wifi className="w-6 h-6 text-primary" />
           <span className="font-semibold text-sidebar-foreground">WMMS</span>
         </div>
-        <UserMenu user={user} logout={handleLogout} />
+        <div className="flex items-center gap-2">
+          <UserMenu user={user} logout={handleLogout} />
+        </div>
       </header>
 
       {/* Mobile Sidebar Overlay */}
@@ -267,6 +270,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Main Content */}
       <main className="lg:pl-64 pt-16 lg:pt-0 min-h-screen">
+        {/* Top bar for desktop */}
+        <header className="hidden lg:flex sticky top-0 h-16 bg-background/80 backdrop-blur-md border-b border-sidebar-border z-40 items-center justify-end px-8 gap-4">
+          <div className="flex items-center gap-2">
+            <ModeToggle />
+          </div>
+        </header>
         <div className="p-4 lg:p-8">{children}</div>
       </main>
     </div>
