@@ -288,3 +288,21 @@ export const getOfficeQueueStatistics = async (): Promise<any> => {
   }>(`/tickets/office/statistics`);
   return response.data.data.statistics;
 };
+
+/**
+ * Get technician statistics
+ * Backend: GET /tickets/technician/statistics
+ * Note: Backend automatically determines technician from logged-in user's token
+ */
+export const getTechnicianStatistics = async (): Promise<{
+  assigned: number;
+  inProgress: number;
+  completedToday: number;
+  total: number;
+}> => {
+  const response = await apiClient.get<{
+    status: string;
+    data: { statistics: any };
+  }>(`/tickets/technician/statistics`);
+  return response.data.data.statistics;
+};

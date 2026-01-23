@@ -77,11 +77,6 @@ const navItemsByRole: Record<string, NavItem[]> = {
       href: "/dashboard/technicians",
       icon: <Users className="w-5 h-5" />,
     },
-    {
-      label: "Offices",
-      href: "/dashboard/offices",
-      icon: <Users className="w-5 h-5" />,
-    },
   ],
   technician: [
     {

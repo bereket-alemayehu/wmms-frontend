@@ -20,6 +20,8 @@ export const queryKeys = {
     details: () => [...queryKeys.tickets.all, "detail"] as const,
     detail: (id: string | number) =>
       [...queryKeys.tickets.details(), id] as const,
+    statistics: (type: string) =>
+      [...queryKeys.tickets.all, "statistics", type] as const,
   },
 
   // Outages

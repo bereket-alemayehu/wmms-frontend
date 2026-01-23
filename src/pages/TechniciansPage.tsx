@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Phone, MapPin, Search, Filter } from "lucide-react";
-import { mockTickets, mockUsers } from "@/lib/mock-data";
+import { Users, Phone, MapPin, Search, Filter, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOffices } from "@/features/offices/hooks/useOffices";
+import { useTechniciansByOffice } from "@/features/users/hooks/ getTechnicians";
+import { useOfficeTickets } from "@/features/tickets/hooks";
 
 export function TechniciansPage() {
   const { user } = useAuth();
@@ -18,27 +19,52 @@ export function TechniciansPage() {
     "all" | "available" | "busy"
   >("all");
 
+  // Fetch technicians for the office
+  const { data: technicians = [], isLoading: techniciansLoading } = useTechniciansByOffice(user?.officeId);
+  
+  // Fetch all office tickets to calculate statistics
+  const { data: tickets = [], isLoading: ticketsLoading } = useOfficeTickets();
+
   if (!user) return null;
 
-  const technicians = mockUsers.filter(
-    (u) => u.role === "technician" && u.officeId === user.officeId,
-  );
   const office = offices.find((o) => o._id === user.officeId);
 
+  // Calculate statistics for each technician
   const techniciansWithStats = useMemo(() => {
     return technicians.map((tech) => {
-      const assignedTickets = mockTickets.filter(
-        (t) =>
-          t.assignedTo === tech._id &&
-          ["Assigned", "In Progress"].includes(t.status),
+      const techId = typeof tech._id === 'string' ? tech._id : tech._id?.toString() || '';
+      
+      const assignedTickets = tickets.filter(
+        (t) => {
+          const assignedToId = typeof t.assignedTo === 'string' 
+            ? t.assignedTo 
+            : typeof t.assignedTo === 'object' && t.assignedTo?._id
+              ? t.assignedTo._id.toString()
+              : '';
+          return assignedToId === techId && ["Assigned", "In Progress"].includes(t.status);
+        }
       );
-      const resolvedTickets = mockTickets.filter(
-        (t) =>
-          t.assignedTo === tech._id &&
-          ["Resolved", "Closed"].includes(t.status),
+      
+      const resolvedTickets = tickets.filter(
+        (t) => {
+          const assignedToId = typeof t.assignedTo === 'string' 
+            ? t.assignedTo 
+            : typeof t.assignedTo === 'object' && t.assignedTo?._id
+              ? t.assignedTo._id.toString()
+              : '';
+          return assignedToId === techId && ["Resolved", "Closed"].includes(t.status);
+        }
       );
-      const inProgressTickets = mockTickets.filter(
-        (t) => t.assignedTo === tech._id && t.status === "In Progress",
+      
+      const inProgressTickets = tickets.filter(
+        (t) => {
+          const assignedToId = typeof t.assignedTo === 'string' 
+            ? t.assignedTo 
+            : typeof t.assignedTo === 'object' && t.assignedTo?._id
+              ? t.assignedTo._id.toString()
+              : '';
+          return assignedToId === techId && t.status === "In Progress";
+        }
       );
 
       return {
@@ -49,7 +75,7 @@ export function TechniciansPage() {
         isAvailable: assignedTickets.length < 3,
       };
     });
-  }, [technicians]);
+  }, [technicians, tickets]);
 
   const filteredTechnicians = useMemo(() => {
     let filtered = techniciansWithStats;
@@ -147,7 +173,11 @@ export function TechniciansPage() {
       </div>
 
       {/* Technicians Grid */}
-      {filteredTechnicians.length === 0 ? (
+      {techniciansLoading || ticketsLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : filteredTechnicians.length === 0 ? (
         <div className="text-center py-16 bg-card border border-border rounded-lg">
           <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium text-foreground mb-2">
@@ -200,7 +230,12 @@ export function TechniciansPage() {
                 {/* Office Location */}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span>{office?.branchName || "Unknown office"}</span>
+                  <span>
+                    {office?.branchName || 
+                     (typeof tech.officeId === 'object' && tech.officeId?.branchName) ||
+                     office?.cityName || 
+                     "Unknown office"}
+                  </span>
                 </div>
 
                 {/* Stats */}
