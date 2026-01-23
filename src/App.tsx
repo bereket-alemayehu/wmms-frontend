@@ -215,7 +215,7 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" enableSystem={false}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthProvider>
           <BrowserRouter>
             <AppRoutes />
