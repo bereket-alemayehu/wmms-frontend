@@ -5,7 +5,8 @@ import { TicketCard } from "@/features/tickets/components/ticketCard";
 import { OutageCard } from "@/features/outages/components/outage-card";
 import { CreateTicketDialog } from "@/features/tickets/components/createTicketDialog";
 import { useCustomerTickets } from "@/features/tickets/hooks";
-import { mockOutages, mockRefunds } from "@/lib/mock-data";
+import { useRefunds } from "@/features/refunds/hooks/useRefunds";
+import { useOutages } from "@/features/outages/hooks";
 import {
   Ticket,
   AlertTriangle,
@@ -24,6 +25,12 @@ export function CustomerDashboard() {
   // Fetch customer's own tickets using specific backend route
   const { data: tickets = [], isLoading } = useCustomerTickets();
 
+  // Fetch customer's refunds (backend automatically filters by logged-in user)
+  const { refunds: customerRefunds = [], isLoading: refundsLoading } = useRefunds();
+
+  // Fetch outages for the customer's office
+  const { data: outages = [], isLoading: outagesLoading } = useOutages(user?.officeId);
+  
   // Calculate stats
   const openTickets = useMemo(
     () => tickets.filter((t) => !["Resolved", "Closed"].includes(t.status)),
@@ -35,11 +42,22 @@ export function CustomerDashboard() {
     [tickets]
   );
 
-  // Temporary mock data (will be replaced with real API calls)
-  const activeOutages = mockOutages.filter((o) => o.status === "Active");
-  const customerRefunds = mockRefunds.filter((r) => r.customerId === user?._id);
-  const approvedRefunds = customerRefunds.filter((r) => r.status === "Approved");
-  const totalRefundAmount = approvedRefunds.reduce((sum, r) => sum + r.amount, 0);
+  // Filter active outages
+  const activeOutages = useMemo(
+    () => outages.filter((o) => o.status === "Active"),
+    [outages]
+  );
+
+  // Calculate refund stats
+  const approvedRefunds = useMemo(
+    () => customerRefunds.filter((r) => r.status === "Approved"),
+    [customerRefunds]
+  );
+  
+  const totalRefundAmount = useMemo(
+    () => approvedRefunds.reduce((sum, r) => sum + r.amount, 0),
+    [approvedRefunds]
+  );
 
   return (
     <div className="space-y-8">

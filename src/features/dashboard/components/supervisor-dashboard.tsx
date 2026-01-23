@@ -3,6 +3,9 @@ import { useAuth } from "@/features/auth/hooks/useAuth"
 import { StatsCard } from "./stats-card"
 import { TicketCard } from "@/features/tickets/components/ticketCard"
 import { useOfficeTickets, useAssignTicket } from "@/features/tickets/hooks"
+import { useOutages } from "@/features/outages/hooks"
+import { useTechniciansByOffice } from "@/features/users/hooks/ getTechnicians"
+import { useCreateOutage } from "@/features/outages/hooks"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,27 +19,30 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Ticket, Users, AlertTriangle, Clock, Plus, Loader2 } from "lucide-react"
-import { mockUsers, mockOutages } from "@/lib/mock-data"
 import { PostOutageDialog } from "@/features/outages/components/post-outage-dialog"
-import type { Outage } from "@/lib/types"
 
 export function SupervisorDashboard() {
   const { user } = useAuth()
   
-  // Fetch office tickets using specific backend route
-  const { data: tickets = [], isLoading } = useOfficeTickets(user?.officeId)
+  // Fetch office tickets using specific backend route (officeId is determined by backend from auth token)
+  const { data: tickets = [], isLoading: ticketsLoading } = useOfficeTickets()
   const assignTicketMutation = useAssignTicket()
   
-  const [outages, setOutages] = useState<Outage[]>(mockOutages)
+  // Fetch outages for the office
+  const { data: outages = [], isLoading: outagesLoading } = useOutages(user?.officeId)
+  
+  // Fetch technicians for the office
+  const { data: technicians = [], isLoading: techniciansLoading } = useTechniciansByOffice(user?.officeId)
+  
+  // Create outage mutation
+  const createOutageMutation = useCreateOutage()
+  
   const [assignDialog, setAssignDialog] = useState<{ open: boolean; ticketId: string | null }>({
     open: false,
     ticketId: null,
   })
   const [outageDialog, setOutageDialog] = useState(false)
   const [selectedTechnician, setSelectedTechnician] = useState("")
-
-  // Filter data
-  const technicians = mockUsers.filter((u) => u.role === "technician" && u.officeId === user?.officeId)
   
   const pendingTickets = useMemo(
     () => tickets.filter((t) => t.status === "Pending"),
@@ -53,7 +59,10 @@ export function SupervisorDashboard() {
     [tickets]
   )
   
-  const activeOutages = outages.filter((o) => o.status === "Active" && o.officeId === user?.officeId)
+  const activeOutages = useMemo(
+    () => outages.filter((o) => o.status === "Active"),
+    [outages]
+  )
 
   const handleAssign = () => {
     if (!assignDialog.ticketId || !selectedTechnician) return
@@ -80,24 +89,18 @@ export function SupervisorDashboard() {
     message: string
     affectedAreas: string[]
     estimatedResolution?: string
-  }) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const newOutage: Outage = {
-      _id: `outage-${Date.now()}`,
-      officeId: user!.officeId!,
-      postedBy: user!._id,
-      title: data.title,
-      message: data.message,
-      affectedAreas: data.affectedAreas,
-      status: "Active",
-      estimatedResolution: data.estimatedResolution ? new Date(data.estimatedResolution).toISOString() : undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    setOutages((prev) => [newOutage, ...prev])
+  }): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      createOutageMutation.mutate(data, {
+        onSuccess: () => {
+          setOutageDialog(false)
+          resolve()
+        },
+        onError: (error) => {
+          reject(error)
+        }
+      })
+    })
   }
 
   return (
@@ -151,44 +154,52 @@ export function SupervisorDashboard() {
           <CardTitle className="text-card-foreground">Available Technicians</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
-            {technicians.map((tech) => {
-              const assignedCount = tickets.filter(
-                (t) => t.assignedTo === tech._id && ["Assigned", "In Progress"].includes(t.status),
-              ).length
-              return (
-                <div key={tech._id} className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-medium">
-                    {tech.fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+          {techniciansLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : technicians.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">No technicians available in this office</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {technicians.map((tech) => {
+                const assignedCount = tickets.filter(
+                  (t) => t.assignedTo === tech._id && ["Assigned", "In Progress"].includes(t.status),
+                ).length
+                return (
+                  <div key={tech._id} className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-medium">
+                      {tech.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-secondary-foreground">{tech.fullName}</p>
+                      <p className="text-xs text-muted-foreground">{assignedCount} active tickets</p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={
+                        assignedCount < 3
+                          ? "bg-success/20 text-success border-success/30"
+                          : "bg-warning/20 text-warning border-warning/30"
+                      }
+                    >
+                      {assignedCount < 3 ? "Available" : "Busy"}
+                    </Badge>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-secondary-foreground">{tech.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{assignedCount} active tickets</p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={
-                      assignedCount < 3
-                        ? "bg-success/20 text-success border-success/30"
-                        : "bg-warning/20 text-warning border-warning/30"
-                    }
-                  >
-                    {assignedCount < 3 ? "Available" : "Busy"}
-                  </Badge>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Pending Tickets */}
       <section>
         <h2 className="text-lg font-semibold text-foreground mb-4">Pending Tickets</h2>
-        {isLoading ? (
+        {ticketsLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
