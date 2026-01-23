@@ -3,7 +3,6 @@
  * Re-export from auth context for consistent import path
  */
 
-import { useAuth } from "../contexts/auth-context"
+import { useAuth } from "../contexts/auth-context";
 
-export { useAuth }
-
+export { useAuth };

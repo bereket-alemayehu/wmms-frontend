@@ -1,7 +1,14 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle, Clock, MapPin, Edit, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  MapPin,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import type { Outage } from "../types";
 import { cn } from "@/lib/utils";
 import { useOffices } from "@/features/offices/hooks/useOffices";
@@ -9,25 +16,30 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 
 interface OutageCardProps {
   outage: Outage;
-  onUpdate?: (id: string, data: { status?: 'Active' | 'Resolved' }) => void;
+  onUpdate?: (id: string, data: { status?: "Active" | "Resolved" }) => void;
   onDelete?: (id: string) => void;
 }
 
 export function OutageCard({ outage, onUpdate, onDelete }: OutageCardProps) {
   const { user } = useAuth();
-  const { offices } = useOffices();
-  
+  const { data: offices = [] } = useOffices();
+
   // Handle both populated object and string ID
-  const officeId = typeof outage.officeId === 'object' && outage.officeId !== null 
-    ? outage.officeId._id 
-    : outage.officeId;
-  const office = offices.find((o) => o._id === officeId) || 
-    (typeof outage.officeId === 'object' && outage.officeId !== null ? outage.officeId : null);
-  
+  const officeId =
+    typeof outage.officeId === "object" && outage.officeId !== null
+      ? outage.officeId._id
+      : outage.officeId;
+  const office =
+    offices.find((o) => o._id === officeId) ||
+    (typeof outage.officeId === "object" && outage.officeId !== null
+      ? outage.officeId
+      : null);
+
   const isActive = outage.status === "Active";
-  
+
   // Role-based permissions
-  const canUpdate = (user?.role === "supervisor" || user?.role === "manager") && onUpdate;
+  const canUpdate =
+    (user?.role === "supervisor" || user?.role === "manager") && onUpdate;
   const canDelete = user?.role === "manager" && onDelete;
 
   const estimatedDate = outage.estimatedResolution
@@ -70,9 +82,12 @@ export function OutageCard({ outage, onUpdate, onDelete }: OutageCardProps) {
               </h3>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                {office?.branchName || 
-                 (typeof outage.officeId === 'object' && outage.officeId !== null ? outage.officeId.branchName : null) || 
-                 "Unknown office"}
+                {office?.branchName ||
+                  (typeof outage.officeId === "object" &&
+                  outage.officeId !== null
+                    ? outage.officeId.branchName
+                    : null) ||
+                  "Unknown office"}
               </p>
             </div>
           </div>
@@ -113,13 +128,15 @@ export function OutageCard({ outage, onUpdate, onDelete }: OutageCardProps) {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onUpdate?.(outage._id, { 
-                  status: isActive ? 'Resolved' : 'Active' 
-                })}
+                onClick={() =>
+                  onUpdate?.(outage._id, {
+                    status: isActive ? "Resolved" : "Active",
+                  })
+                }
                 className="flex-1"
               >
                 <Edit className="w-3.5 h-3.5 mr-1" />
-                {isActive ? 'Mark Resolved' : 'Mark Active'}
+                {isActive ? "Mark Resolved" : "Mark Active"}
               </Button>
             )}
             {canDelete && (

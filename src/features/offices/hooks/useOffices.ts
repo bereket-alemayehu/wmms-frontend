@@ -1,73 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
-import type { Office } from "../types";
-import { officesApi } from "../api/offices";
+/**
+ * useOffices Hook
+ * React Query hook for fetching offices list
+ */
 
-const officesCache = new Map<string, Office[]>();
-const inflightRequests = new Map<string, Promise<Office[]>>();
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
+import { getAllOffices } from "../api/office";
 
-function makeCacheKey(params?: Record<string, any>) {
-  if (!params) return "__default__";
-  try {
-    const keys = Object.keys(params).sort();
-    const normalized: Record<string, any> = {};
-    for (const key of keys) normalized[key] = params[key];
-    return JSON.stringify(normalized);
-  } catch {
-    return "__default__";
-  }
-}
-
-export function useOffices(params?: Record<string, any>) {
-  const [offices, setOffices] = useState<Office[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchOffices = useCallback(
-    async (force?: boolean) => {
-      const cacheKey = makeCacheKey(params);
-
-      if (!force) {
-        const cached = officesCache.get(cacheKey);
-        if (cached) {
-          setOffices(cached);
-          return;
-        }
-      }
-
-      setIsLoading(true);
-      setError(null);
-      try {
-        const existingInflight = inflightRequests.get(cacheKey);
-        const request =
-          existingInflight ||
-          officesApi
-            .getAll(params)
-            .then((data) => {
-              officesCache.set(cacheKey, data);
-              return data;
-            })
-            .finally(() => {
-              inflightRequests.delete(cacheKey);
-            });
-
-        if (!existingInflight) inflightRequests.set(cacheKey, request);
-
-        const data = await request;
-        setOffices(data);
-      } catch (e: any) {
-        setError(
-          e?.response?.data?.message || e?.message || "Failed to load offices",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [params],
-  );
-
-  useEffect(() => {
-    fetchOffices();
-  }, [fetchOffices]);
-
-  return { offices, isLoading, error, refresh: () => fetchOffices(true) };
-}
+export const useOffices = (params?: Record<string, any>, enabled = true) => {
+  return useQuery({
+    queryKey: queryKeys.offices.list((params || {}) as Record<string, unknown>),
+    queryFn: () => getAllOffices(params),
+    enabled,
+    staleTime: 1000 * 60 * 2,
+  });
+};
