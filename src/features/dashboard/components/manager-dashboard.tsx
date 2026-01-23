@@ -34,7 +34,7 @@ import {
   Ticket,
   TrendingUp,
 } from "lucide-react";
-import { useTickets } from "@/features/tickets/hooks";
+import { useTickets, useTopRatedTechnicians } from "@/features/tickets/hooks";
 import { useRefunds } from "@/features/refunds/hooks/useRefunds";
 import { useOutages } from "@/features/outages/hooks/useOutages";
 import { useOffices } from "@/features/offices/hooks/useOffices";
@@ -52,6 +52,7 @@ export function ManagerDashboard() {
   const { refunds } = useRefunds();
   const { data: outages = [] } = useOutages();
   const { data: offices = [] } = useOffices();
+  const { data: topRatedTechniciansData = [] } = useTopRatedTechnicians(3);
 
   const totalTickets = tickets.length;
   const resolvedTickets = tickets.filter((t) =>
@@ -199,29 +200,15 @@ export function ManagerDashboard() {
     };
   });
 
-  const ratedByTechnician = technicians
-    .map((tech) => {
-      const ratedTickets = tickets.filter(
-        (t) => t.assignedTo === tech._id && typeof t.rating === "number",
-      );
-      if (!ratedTickets.length) return null;
-      const average =
-        ratedTickets.reduce((sum, t) => sum + (t.rating || 0), 0) /
-        ratedTickets.length;
-      return {
-        tech,
-        average: Math.round(average * 10) / 10,
-        count: ratedTickets.length,
-      };
-    })
-    .filter(Boolean)
-    .sort((a: any, b: any) => b.average - a.average || b.count - a.count);
-
-  const topRatedTechnicians = ratedByTechnician.slice(0, 3) as Array<{
-    tech: (typeof technicians)[number];
-    average: number;
-    count: number;
-  }>;
+  // Map backend top-rated technicians data to the format expected by the UI
+  const topRatedTechnicians = topRatedTechniciansData.map((techData) => ({
+    tech: {
+      _id: techData.technicianId,
+      fullName: techData.fullName,
+    },
+    average: techData.averageRating,
+    count: techData.ratingCount,
+  }));
 
   const getDayKey = (dateStr: string) => {
     const d = new Date(dateStr);

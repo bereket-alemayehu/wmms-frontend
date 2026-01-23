@@ -4,7 +4,17 @@ import { OutageCard } from "@/features/outages/components/outage-card"
 import { PostOutageDialog } from "@/features/outages/components/post-outage-dialog"
 import { useOutages, useCreateOutage, useUpdateOutage, useDeleteOutage } from "@/features/outages/hooks"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle, WifiOff, Plus, Loader2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { AlertTriangle, WifiOff, Plus, Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 export function OutagesPage() {
@@ -14,6 +24,7 @@ export function OutagesPage() {
   const updateOutageMutation = useUpdateOutage()
   const deleteOutageMutation = useDeleteOutage()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [outageToDelete, setOutageToDelete] = useState<string | null>(null)
 
   // Role-based filtering
   const filteredOutages = useMemo(() => {
@@ -66,9 +77,14 @@ export function OutagesPage() {
     await updateOutageMutation.mutateAsync({ id, data })
   }
 
-  const handleDeleteOutage = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this outage?")) return
-    await deleteOutageMutation.mutateAsync(id)
+  const handleDeleteOutage = (id: string) => {
+    setOutageToDelete(id)
+  }
+
+  const confirmDeleteOutage = async () => {
+    if (!outageToDelete) return
+    await deleteOutageMutation.mutateAsync(outageToDelete)
+    setOutageToDelete(null)
   }
 
   if (isLoading) {
@@ -124,6 +140,46 @@ export function OutagesPage() {
           officeId={user.officeId!}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={outageToDelete !== null} onOpenChange={(open) => !open && setOutageToDelete(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-card-foreground flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-destructive" />
+              Delete Outage
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Are you sure you want to delete this outage? This action cannot be undone and will permanently remove the outage notification.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => setOutageToDelete(null)}
+              className="border-border text-card-foreground"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteOutage}
+              disabled={deleteOutageMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteOutageMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">

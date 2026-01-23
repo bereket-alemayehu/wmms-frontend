@@ -306,3 +306,59 @@ export const getTechnicianStatistics = async (): Promise<{
   }>(`/tickets/technician/statistics`);
   return response.data.data.statistics;
 };
+
+/**
+ * Get system analytics
+ * Backend: GET /tickets/analytics
+ * Note: Only accessible by managers
+ */
+export const getSystemAnalytics = async (): Promise<{
+  totalTickets: number;
+  resolvedTickets: number;
+  pendingTickets: number;
+  inProgressTickets: number;
+  assignedTickets: number;
+  closedTickets: number;
+  resolutionRate: number;
+  ticketsByCategory: {
+    category: string;
+    count: number;
+    percentage: number;
+  }[];
+  ticketsByStatus: {
+    status: string;
+    count: number;
+  }[];
+  technicianPerformance: {
+    technicianId: string;
+    fullName: string;
+    activeCount: number;
+    resolvedThisMonth: number;
+  }[];
+}> => {
+  const response = await apiClient.get<{
+    status: string;
+    data: { analytics: any };
+  }>(`/tickets/analytics`);
+  return response.data.data.analytics;
+};
+
+/**
+ * Get top-rated technicians
+ * Backend: GET /tickets/top-rated-technicians
+ * Note: Only accessible by managers
+ */
+export const getTopRatedTechnicians = async (limit: number = 3): Promise<{
+  technicianId: string;
+  fullName: string;
+  averageRating: number;
+  ratingCount: number;
+}[]> => {
+  const response = await apiClient.get<{
+    status: string;
+    data: { technicians: any };
+  }>(`/tickets/top-rated-technicians`, {
+    params: { limit },
+  });
+  return response.data.data.technicians;
+};

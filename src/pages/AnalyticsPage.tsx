@@ -1,20 +1,43 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Ticket, TrendingUp, Users } from "lucide-react";
-import { mockTickets, mockUsers } from "@/lib/mock-data";
+import { Ticket, TrendingUp, Users, Loader2 } from "lucide-react";
+import { useSystemAnalytics } from "@/features/tickets/hooks";
 
 export function AnalyticsPage() {
-  const totalTickets = mockTickets.length;
-  const resolvedTickets = mockTickets.filter((t) =>
-    ["Resolved", "Closed"].includes(t.status)
-  ).length;
-  const pendingTickets = mockTickets.filter(
-    (t) => t.status === "Pending"
-  ).length;
-  const inProgressTickets = mockTickets.filter(
-    (t) => t.status === "In Progress"
-  ).length;
-  const resolutionRate =
-    totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 0;
+  const { data: analytics, isLoading, error } = useSystemAnalytics();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !analytics) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <p className="text-destructive">Failed to load analytics</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {error instanceof Error ? error.message : "Unknown error"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const {
+    totalTickets,
+    resolvedTickets,
+    pendingTickets,
+    inProgressTickets,
+    resolutionRate,
+    ticketsByCategory,
+    ticketsByStatus,
+    technicianPerformance,
+  } = analytics;
 
   return (
     <div className="space-y-6">
@@ -113,33 +136,22 @@ export function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {["No Connection", "Speed Issue", "Hardware Fault", "Other"].map(
-                (category) => {
-                  const count = mockTickets.filter(
-                    (t) => t.category === category
-                  ).length;
-                  const percentage =
-                    totalTickets > 0
-                      ? Math.round((count / totalTickets) * 100)
-                      : 0;
-                  return (
-                    <div key={category} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-card-foreground">{category}</span>
-                        <span className="text-muted-foreground">
-                          {count} ({percentage}%)
-                        </span>
-                      </div>
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                }
-              )}
+              {ticketsByCategory.map((item) => (
+                <div key={item.category} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-card-foreground">{item.category}</span>
+                    <span className="text-muted-foreground">
+                      {item.count} ({item.percentage}%)
+                    </span>
+                  </div>
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full"
+                      style={{ width: `${item.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -152,43 +164,38 @@ export function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {mockUsers
-                .filter((u) => u.role === "technician")
-                .map((tech) => {
-                  const resolved = mockTickets.filter(
-                    (t) =>
-                      t.assignedTo === tech._id &&
-                      ["Resolved", "Closed"].includes(t.status)
-                  ).length;
-                  const assigned = mockTickets.filter(
-                    (t) =>
-                      t.assignedTo === tech._id &&
-                      ["Assigned", "In Progress"].includes(t.status)
-                  ).length;
+              {technicianPerformance.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No technicians found
+                </p>
+              ) : (
+                technicianPerformance.map((tech) => {
+                  const initials = tech.fullName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase();
                   return (
                     <div
-                      key={tech._id}
+                      key={tech.technicianId}
                       className="flex items-center justify-between p-3 bg-secondary rounded-lg"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-medium">
-                          {tech.fullName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                          {initials}
                         </div>
                         <div>
                           <span className="text-sm font-medium text-secondary-foreground block">
                             {tech.fullName}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {assigned} active
+                            {tech.activeCount} active
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-secondary-foreground">
-                          {resolved} resolved
+                          {tech.resolvedThisMonth} resolved
                         </p>
                         <p className="text-xs text-muted-foreground">
                           this month
@@ -196,7 +203,8 @@ export function AnalyticsPage() {
                       </div>
                     </div>
                   );
-                })}
+                })
+              )}
             </div>
           </CardContent>
         </Card>
@@ -211,36 +219,14 @@ export function AnalyticsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center p-4 bg-secondary rounded-lg">
-              <p className="text-2xl font-bold text-secondary-foreground">
-                {mockTickets.filter((t) => t.status === "Pending").length}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Pending</p>
-            </div>
-            <div className="text-center p-4 bg-secondary rounded-lg">
-              <p className="text-2xl font-bold text-secondary-foreground">
-                {mockTickets.filter((t) => t.status === "Assigned").length}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Assigned</p>
-            </div>
-            <div className="text-center p-4 bg-secondary rounded-lg">
-              <p className="text-2xl font-bold text-secondary-foreground">
-                {mockTickets.filter((t) => t.status === "In Progress").length}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">In Progress</p>
-            </div>
-            <div className="text-center p-4 bg-secondary rounded-lg">
-              <p className="text-2xl font-bold text-secondary-foreground">
-                {mockTickets.filter((t) => t.status === "Resolved").length}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Resolved</p>
-            </div>
-            <div className="text-center p-4 bg-secondary rounded-lg">
-              <p className="text-2xl font-bold text-secondary-foreground">
-                {mockTickets.filter((t) => t.status === "Closed").length}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Closed</p>
-            </div>
+            {ticketsByStatus.map((statusItem) => (
+              <div key={statusItem.status} className="text-center p-4 bg-secondary rounded-lg">
+                <p className="text-2xl font-bold text-secondary-foreground">
+                  {statusItem.count}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{statusItem.status}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

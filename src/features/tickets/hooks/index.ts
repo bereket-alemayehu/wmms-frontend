@@ -15,6 +15,8 @@ export { useTicketQueuePosition } from './useTicketQueuePosition'
 export { useRefundEligibility } from './useRefundEligibility'
 export { useOfficeQueueStatistics } from './useOfficeQueueStatistics'
 export { useTechnicianStatistics } from './useTechnicianStatistics'
+export { useSystemAnalytics } from './useSystemAnalytics'
+export { useTopRatedTechnicians } from './useTopRatedTechnicians'
 
 // Mutation Hooks
 export { useCreateTicket } from './useCreateTicket'
