@@ -45,7 +45,6 @@ export function PostOutageDialog({
   open,
   onOpenChange,
   onSubmit,
-  officeId,
 }: PostOutageDialogProps) {
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
@@ -65,7 +64,7 @@ export function PostOutageDialog({
 
   const handleZoneToggle = (zone: string) => {
     setSelectedZones((prev) =>
-      prev.includes(zone) ? prev.filter((z) => z !== zone) : [...prev, zone]
+      prev.includes(zone) ? prev.filter((z) => z !== zone) : [...prev, zone],
     );
   };
 
@@ -147,7 +146,7 @@ export function PostOutageDialog({
                   >
                     {zone}
                   </Badge>
-                )
+                ),
               )}
             </div>
           </div>

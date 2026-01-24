@@ -53,6 +53,12 @@ export function ManagerDashboard() {
   const { data: outages = [] } = useOutages();
   const { data: offices = [] } = useOffices();
 
+  const getAssignedToId = (
+    assignedTo?:
+      | string
+      | { _id: string; fullName?: string; phoneNumber?: string },
+  ) => (typeof assignedTo === "string" ? assignedTo : assignedTo?._id);
+
   const totalTickets = tickets.length;
   const resolvedTickets = tickets.filter((t) =>
     ["Resolved", "Closed"].includes(t.status),
@@ -163,20 +169,27 @@ export function ManagerDashboard() {
         if (ticket.technician) {
           map.set(ticket.technician._id, ticket.technician);
         } else if (ticket.assignedTo) {
-          const id = ticket.assignedTo;
-          const fallback = {
-            _id: id,
-            fullName: `Tech ${id.slice(-4)}`,
-            phoneNumber: "",
-          };
-          map.set(id, map.get(id) || fallback);
+          const assignedToId = getAssignedToId(ticket.assignedTo);
+          if (!assignedToId) return map;
+          if (typeof ticket.assignedTo === "object") {
+            map.set(assignedToId, ticket.assignedTo);
+          } else {
+            const fallback = {
+              _id: assignedToId,
+              fullName: `Tech ${assignedToId.slice(-4)}`,
+              phoneNumber: "",
+            };
+            map.set(assignedToId, map.get(assignedToId) || fallback);
+          }
         }
         return map;
       }, new Map<string, { _id: string; fullName: string; phoneNumber?: string }>())
       .values(),
   );
   const technicianWorkload = technicians.map((tech) => {
-    const assignedTickets = tickets.filter((t) => t.assignedTo === tech._id);
+    const assignedTickets = tickets.filter(
+      (t) => getAssignedToId(t.assignedTo) === tech._id,
+    );
     const resolvedAssigned = assignedTickets.filter((t) =>
       ["Resolved", "Closed"].includes(t.status),
     );
@@ -202,7 +215,9 @@ export function ManagerDashboard() {
   const ratedByTechnician = technicians
     .map((tech) => {
       const ratedTickets = tickets.filter(
-        (t) => t.assignedTo === tech._id && typeof t.rating === "number",
+        (t) =>
+          getAssignedToId(t.assignedTo) === tech._id &&
+          typeof t.rating === "number",
       );
       if (!ratedTickets.length) return null;
       const average =
