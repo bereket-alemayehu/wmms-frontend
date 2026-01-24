@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { ModeToggle } from "@/components/common/mode-toggle";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 
 interface NavItem {
   label: string;
@@ -161,6 +162,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <span className="font-semibold text-sidebar-foreground">WMMS</span>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <UserMenu user={user} logout={handleLogout} />
         </div>
       </header>
@@ -268,7 +270,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Top bar for desktop */}
         <header className="hidden lg:flex sticky top-0 h-16 bg-background/80 backdrop-blur-md border-b border-sidebar-border z-40 items-center justify-end px-8 gap-4">
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <ModeToggle />
+            <UserMenu user={user} logout={handleLogout} />
           </div>
         </header>
         <div className="p-4 lg:p-8">{children}</div>

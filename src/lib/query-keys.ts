@@ -101,4 +101,13 @@ export const queryKeys = {
     performance: () => [...queryKeys.analytics.all, "performance"] as const,
     reports: () => [...queryKeys.analytics.all, "reports"] as const,
   },
+
+  // Notifications
+  notifications: {
+    all: ["notifications"] as const,
+    lists: () => [...queryKeys.notifications.all, "list"] as const,
+    list: (params?: { read?: boolean; limit?: number }) =>
+      [...queryKeys.notifications.lists(), { params }] as const,
+    unreadCount: () => [...queryKeys.notifications.all, "unreadCount"] as const,
+  },
 } as const;

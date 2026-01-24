@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/query-keys"
 import type { User } from "../types"
 import { authApi } from "../api/auth"
 
@@ -21,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true) // For initial auth check
   const [isLoggingIn, setIsLoggingIn] = useState(false) // For login action
   const [isSigningUp, setIsSigningUp] = useState(false) // For signup actions
+  const queryClient = useQueryClient()
 
   const checkAuth = useCallback(async () => {
     try {
@@ -51,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.login({ serviceNumber, password })
       if (response.status === 'success' && response.data?.user) {
         // Cookie is automatically set by backend
+        // Clear notification cache when new user logs in
+        queryClient.removeQueries({ queryKey: queryKeys.notifications.all })
         setUser(response.data.user)
         return { success: true }
       } else {
@@ -126,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.signupVerifyOtp({ serviceNumber, otp })
       if (response.status === 'success' && response.data?.user) {
         // Cookie is automatically set by backend
+        // Clear notification cache when new user signs up
+        queryClient.removeQueries({ queryKey: queryKeys.notifications.all })
         setUser(response.data.user)
         return { success: true }
       } else {
