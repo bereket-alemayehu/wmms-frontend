@@ -17,6 +17,7 @@ import { TechniciansPage } from "@/pages/TechniciansPage";
 import { RefundsPage } from "@/pages/RefundsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import { MyRefundsPage } from "@/pages/MyRefundsPage";
+import { SupervisorsPage } from "@/pages/SupervisorsPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { queryClient } from "@/lib/react-query";
 import "@/styles/globals.css";
@@ -165,6 +166,16 @@ function AppRoutes() {
               <TechniciansPage />
             </DashboardLayout>
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/supervisors"
+        element={
+          <RoleRoute allowedRoles={["manager"]}>
+            <DashboardLayout>
+              <SupervisorsPage />
+            </DashboardLayout>
+          </RoleRoute>
         }
       />
       <Route
