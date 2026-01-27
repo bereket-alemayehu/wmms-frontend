@@ -337,6 +337,12 @@ function UserMenu({
           <p className="text-xs text-muted-foreground">{user.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/dashboard/profile" className="cursor-pointer">
+            <Users className="w-4 h-4 mr-2" />
+            Profile
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={logout}
           className="text-destructive focus:text-destructive"

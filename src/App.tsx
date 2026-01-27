@@ -22,6 +22,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { queryClient } from "@/lib/react-query";
 import "@/styles/globals.css";
 import { OfficesPage } from "./pages/OfficesPage";
+import { ProfilePage } from "./pages/ProfilePage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -114,6 +115,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <DashboardPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/profile"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ProfilePage />
             </DashboardLayout>
           </ProtectedRoute>
         }

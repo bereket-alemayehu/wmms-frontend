@@ -14,6 +14,7 @@ interface AuthContextType {
   signupInitiate: (serviceNumber: string, password: string, passwordConfirm: string) => Promise<{ success: boolean; error?: string; data?: { fullName: string; email: string } }>
   signupVerifyOtp: (serviceNumber: string, otp: string) => Promise<{ success: boolean; error?: string }>
   checkAuth: () => Promise<void>
+  setUser: React.Dispatch<React.SetStateAction<User | null>>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -66,13 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       // Extract error message from backend response
       let errorMessage = 'Login failed. Please try again.'
-      
+
       // Backend sends errors in this format: 
       // Development: { status: "fail", message: "...", stack: "...", error: {...} }
       // Production: { status: "fail", message: "..." }
       if (error.response?.data) {
         const data = error.response.data
-        
+
         // Try different possible locations for the error message
         if (typeof data.message === 'string' && data.message) {
           errorMessage = data.message
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (error.message) {
         errorMessage = error.message
       }
-      
+
       return { success: false, error: errorMessage }
     } finally {
       setIsLoggingIn(false)
@@ -105,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       // Extract error message from backend response
       let errorMessage = 'Signup initiation failed. Please try again.'
-      
+
       if (error.response?.data) {
         const data = error.response.data
         if (typeof data.message === 'string' && data.message) {
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (error.message) {
         errorMessage = error.message
       }
-      
+
       return { success: false, error: errorMessage }
     } finally {
       setIsSigningUp(false)
@@ -141,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       // Extract error message from backend response
       let errorMessage = 'OTP verification failed. Please try again.'
-      
+
       if (error.response?.data) {
         const data = error.response.data
         if (typeof data.message === 'string' && data.message) {
@@ -154,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (error.message) {
         errorMessage = error.message
       }
-      
+
       return { success: false, error: errorMessage }
     } finally {
       setIsSigningUp(false)
@@ -176,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return <AuthContext.Provider value={{ user, isLoading, isLoggingIn, isSigningUp, login, logout, signupInitiate, signupVerifyOtp, checkAuth }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, isLoading, isLoggingIn, isSigningUp, login, logout, signupInitiate, signupVerifyOtp, checkAuth, setUser }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
