@@ -5,11 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Phone, MapPin, Search, Filter, Loader2 } from "lucide-react";
+import { Users, Phone, MapPin, Search, Filter, Loader2, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOffices } from "@/features/offices/hooks/useOffices";
 import { useTechniciansByOffice } from "@/features/users/hooks/ getTechnicians";
 import { useOfficeTickets } from "@/features/tickets/hooks";
+import { CreateUserDialog } from "@/features/users/components/CreateUserDialog";
 
 export function TechniciansPage() {
   const { user } = useAuth();
@@ -18,10 +19,11 @@ export function TechniciansPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "available" | "busy"
   >("all");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Fetch technicians for the office
   const { data: technicians = [], isLoading: techniciansLoading } = useTechniciansByOffice(user?.officeId);
-  
+
   // Fetch all office tickets to calculate statistics
   const { data: tickets = [], isLoading: ticketsLoading } = useOfficeTickets();
 
@@ -32,34 +34,34 @@ export function TechniciansPage() {
   // Calculate statistics for each technician
   const techniciansWithStats = useMemo(() => {
     return technicians.map((tech) => {
-      const techId = typeof tech._id === 'string' ? tech._id : tech._id?.toString() || '';
-      
+      const techId = typeof tech._id === 'string' ? tech._id : (tech._id as any)?.toString() || '';
+
       const assignedTickets = tickets.filter(
-        (t) => {
-          const assignedToId = typeof t.assignedTo === 'string' 
-            ? t.assignedTo 
+        (t: any) => {
+          const assignedToId = typeof t.assignedTo === 'string'
+            ? t.assignedTo
             : typeof t.assignedTo === 'object' && t.assignedTo?._id
               ? t.assignedTo._id.toString()
               : '';
           return assignedToId === techId && ["Assigned", "In Progress"].includes(t.status);
         }
       );
-      
+
       const resolvedTickets = tickets.filter(
-        (t) => {
-          const assignedToId = typeof t.assignedTo === 'string' 
-            ? t.assignedTo 
+        (t: any) => {
+          const assignedToId = typeof t.assignedTo === 'string'
+            ? t.assignedTo
             : typeof t.assignedTo === 'object' && t.assignedTo?._id
               ? t.assignedTo._id.toString()
               : '';
           return assignedToId === techId && ["Resolved", "Closed"].includes(t.status);
         }
       );
-      
+
       const inProgressTickets = tickets.filter(
-        (t) => {
-          const assignedToId = typeof t.assignedTo === 'string' 
-            ? t.assignedTo 
+        (t: any) => {
+          const assignedToId = typeof t.assignedTo === 'string'
+            ? t.assignedTo
             : typeof t.assignedTo === 'object' && t.assignedTo?._id
               ? t.assignedTo._id.toString()
               : '';
@@ -117,9 +119,20 @@ export function TechniciansPage() {
             Manage and monitor your team of technicians
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="w-4 h-4" />
-          <span>{filteredTechnicians.length} technician(s)</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="w-4 h-4" />
+            <span>{filteredTechnicians.length} technician(s)</span>
+          </div>
+          {(user.role === "manager" || user.role === "supervisor") && (
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Add Technician
+            </Button>
+          )}
         </div>
       </div>
 
@@ -231,10 +244,10 @@ export function TechniciansPage() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span>
-                    {office?.branchName || 
-                     (typeof tech.officeId === 'object' && tech.officeId?.branchName) ||
-                     office?.cityName || 
-                     "Unknown office"}
+                    {office?.branchName ||
+                      (typeof tech.officeId === 'object' && (tech.officeId as any)?.branchName) ||
+                      office?.cityName ||
+                      "Unknown office"}
                   </span>
                 </div>
 
@@ -315,6 +328,13 @@ export function TechniciansPage() {
           </div>
         </CardContent>
       </Card>
+
+      <CreateUserDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        role="technician"
+        officeId={user.officeId} // If supervisor, pre-select their office
+      />
     </div>
   );
 }
