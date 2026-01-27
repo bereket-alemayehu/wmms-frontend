@@ -1,50 +1,27 @@
 import { useMemo } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 import { StatsCard } from "./stats-card";
+import { Wrench, CheckCircle, Clock, Loader2 } from "lucide-react";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Wrench, CheckCircle, Clock, MapPin, Phone, User, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useOffices } from "@/features/offices/hooks/useOffices";
-import { useTechnicianTickets, useTechnicianStatistics, useChangeTicketStatus } from "@/features/tickets/hooks";
+  useTechnicianTickets,
+  useTechnicianStatistics,
+  useChangeTicketStatus,
+} from "@/features/tickets/hooks";
 import { TicketCard } from "@/features/tickets/components/ticketCard";
 
-const statusColors: Record<string, string> = {
-  Assigned: "bg-chart-2/20 text-chart-2 border-chart-2/30",
-  "In Progress": "bg-primary/20 text-primary border-primary/30",
-};
-
 export function TechnicianDashboard() {
-  const { user } = useAuth();
-  const { data: offices = [] } = useOffices();
-  
   // Fetch technician statistics (summary data)
-  const { data: stats, isLoading: statsLoading } = useTechnicianStatistics();
-  
+  const { data: stats } = useTechnicianStatistics();
+
   // Fetch only active tickets (Assigned and In Progress) for dashboard preview
-  const { data: allTickets = [], isLoading: ticketsLoading } = useTechnicianTickets();
+  const { data: allTickets = [], isLoading: ticketsLoading } =
+    useTechnicianTickets();
   const changeStatusMutation = useChangeTicketStatus();
-  
+
   // Filter to show only active tasks on dashboard (not resolved/closed)
   const activeTickets = useMemo(
-    () => allTickets.filter((t) => ["Assigned", "In Progress"].includes(t.status)),
-    [allTickets]
-  );
-
-  const assignedTickets = useMemo(
-    () => activeTickets.filter((t) => t.status === "Assigned"),
-    [activeTickets]
-  );
-  
-  const inProgressTickets = useMemo(
-    () => activeTickets.filter((t) => t.status === "In Progress"),
-    [activeTickets]
+    () =>
+      allTickets.filter((t) => ["Assigned", "In Progress"].includes(t.status)),
+    [allTickets],
   );
 
   const handleStatusChange = async (

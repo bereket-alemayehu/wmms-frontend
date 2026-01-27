@@ -1,14 +1,14 @@
-import { useState, useMemo } from "react"
-import { useAuth } from "@/features/auth/hooks/useAuth"
-import { StatsCard } from "./stats-card"
-import { TicketCard } from "@/features/tickets/components/ticketCard"
-import { useOfficeTickets, useAssignTicket } from "@/features/tickets/hooks"
-import { useOutages } from "@/features/outages/hooks"
-import { useTechniciansByOffice } from "@/features/users/hooks/ getTechnicians"
-import { useCreateOutage } from "@/features/outages/hooks"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useMemo } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { StatsCard } from "./stats-card";
+import { TicketCard } from "@/features/tickets/components/ticketCard";
+import { useOfficeTickets, useAssignTicket } from "@/features/tickets/hooks";
+import { useOutages } from "@/features/outages/hooks";
+import { useTechniciansByOffice } from "@/features/users/hooks/ getTechnicians";
+import { useCreateOutage } from "@/features/outages/hooks";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -16,100 +16,124 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Ticket, Users, AlertTriangle, Clock, Plus, Loader2 } from "lucide-react"
-import { PostOutageDialog } from "@/features/outages/components/post-outage-dialog"
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Ticket,
+  Users,
+  AlertTriangle,
+  Clock,
+  Plus,
+  Loader2,
+} from "lucide-react";
+import { PostOutageDialog } from "@/features/outages/components/post-outage-dialog";
 
 export function SupervisorDashboard() {
-  const { user } = useAuth()
-  
+  const { user } = useAuth();
+
   // Fetch office tickets using specific backend route (officeId is determined by backend from auth token)
-  const { data: tickets = [], isLoading: ticketsLoading } = useOfficeTickets()
-  const assignTicketMutation = useAssignTicket()
-  
+  const { data: tickets = [], isLoading: ticketsLoading } = useOfficeTickets();
+  const assignTicketMutation = useAssignTicket();
+
   // Fetch outages for the office
-  const { data: outages = [], isLoading: outagesLoading } = useOutages(user?.officeId)
-  
+  const { data: outages = [] } = useOutages(user?.officeId);
+
   // Fetch technicians for the office
-  const { data: technicians = [], isLoading: techniciansLoading } = useTechniciansByOffice(user?.officeId)
-  
+  const { data: technicians = [], isLoading: techniciansLoading } =
+    useTechniciansByOffice(user?.officeId);
+
   // Create outage mutation
-  const createOutageMutation = useCreateOutage()
-  
-  const [assignDialog, setAssignDialog] = useState<{ open: boolean; ticketId: string | null }>({
+  const createOutageMutation = useCreateOutage();
+
+  const [assignDialog, setAssignDialog] = useState<{
+    open: boolean;
+    ticketId: string | null;
+  }>({
     open: false,
     ticketId: null,
-  })
-  const [outageDialog, setOutageDialog] = useState(false)
-  const [selectedTechnician, setSelectedTechnician] = useState("")
-  
+  });
+  const [outageDialog, setOutageDialog] = useState(false);
+  const [selectedTechnician, setSelectedTechnician] = useState("");
+
   const pendingTickets = useMemo(
     () => tickets.filter((t) => t.status === "Pending"),
-    [tickets]
-  )
-  
+    [tickets],
+  );
+
   const assignedTickets = useMemo(
     () => tickets.filter((t) => t.status === "Assigned"),
-    [tickets]
-  )
-  
+    [tickets],
+  );
+
   const inProgressTickets = useMemo(
     () => tickets.filter((t) => t.status === "In Progress"),
-    [tickets]
-  )
-  
+    [tickets],
+  );
+
   const activeOutages = useMemo(
     () => outages.filter((o) => o.status === "Active"),
-    [outages]
-  )
+    [outages],
+  );
 
   const handleAssign = () => {
-    if (!assignDialog.ticketId || !selectedTechnician) return
-    
-    assignTicketMutation.mutate({
-      ticketId: assignDialog.ticketId,
-      data: { technicianId: selectedTechnician }
-    }, {
-      onSuccess: () => {
-        setAssignDialog({ open: false, ticketId: null })
-        setSelectedTechnician("")
-      }
-    })
-  }
+    if (!assignDialog.ticketId || !selectedTechnician) return;
+
+    assignTicketMutation.mutate(
+      {
+        ticketId: assignDialog.ticketId,
+        data: { technicianId: selectedTechnician },
+      },
+      {
+        onSuccess: () => {
+          setAssignDialog({ open: false, ticketId: null });
+          setSelectedTechnician("");
+        },
+      },
+    );
+  };
 
   const handleTicketAction = (action: string, ticketId: string) => {
     if (action === "assign") {
-      setAssignDialog({ open: true, ticketId })
+      setAssignDialog({ open: true, ticketId });
     }
-  }
+  };
 
   const handlePostOutage = async (data: {
-    title: string
-    message: string
-    affectedAreas: string[]
-    estimatedResolution?: string
+    title: string;
+    message: string;
+    affectedAreas: string[];
+    estimatedResolution?: string;
   }): Promise<void> => {
     return new Promise((resolve, reject) => {
       createOutageMutation.mutate(data, {
         onSuccess: () => {
-          setOutageDialog(false)
-          resolve()
+          setOutageDialog(false);
+          resolve();
         },
         onError: (error) => {
-          reject(error)
-        }
-      })
-    })
-  }
+          reject(error);
+        },
+      });
+    });
+  };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Supervisor Dashboard</h1>
-          <p className="text-muted-foreground">Manage tickets and assign technicians</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            Supervisor Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Manage tickets and assign technicians
+          </p>
         </div>
         <Button
           onClick={() => setOutageDialog(true)}
@@ -151,7 +175,9 @@ export function SupervisorDashboard() {
       {/* Technicians Overview */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-card-foreground">Available Technicians</CardTitle>
+          <CardTitle className="text-card-foreground">
+            Available Technicians
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {techniciansLoading ? (
@@ -159,15 +185,22 @@ export function SupervisorDashboard() {
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : technicians.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No technicians available in this office</p>
+            <p className="text-muted-foreground text-center py-8">
+              No technicians available in this office
+            </p>
           ) : (
             <div className="flex flex-wrap gap-3">
               {technicians.map((tech) => {
                 const assignedCount = tickets.filter(
-                  (t) => t.assignedTo === tech._id && ["Assigned", "In Progress"].includes(t.status),
-                ).length
+                  (t) =>
+                    t.assignedTo === tech._id &&
+                    ["Assigned", "In Progress"].includes(t.status),
+                ).length;
                 return (
-                  <div key={tech._id} className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg">
+                  <div
+                    key={tech._id}
+                    className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg"
+                  >
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-medium">
                       {tech.fullName
                         .split(" ")
@@ -175,8 +208,12 @@ export function SupervisorDashboard() {
                         .join("")}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-secondary-foreground">{tech.fullName}</p>
-                      <p className="text-xs text-muted-foreground">{assignedCount} active tickets</p>
+                      <p className="text-sm font-medium text-secondary-foreground">
+                        {tech.fullName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {assignedCount} active tickets
+                      </p>
                     </div>
                     <Badge
                       variant="outline"
@@ -189,7 +226,7 @@ export function SupervisorDashboard() {
                       {assignedCount < 3 ? "Available" : "Busy"}
                     </Badge>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -198,7 +235,9 @@ export function SupervisorDashboard() {
 
       {/* Pending Tickets */}
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Pending Tickets</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          Pending Tickets
+        </h2>
         {ticketsLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -206,7 +245,9 @@ export function SupervisorDashboard() {
         ) : pendingTickets.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-lg">
             <Ticket className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No pending tickets. All caught up!</p>
+            <p className="text-muted-foreground">
+              No pending tickets. All caught up!
+            </p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -226,17 +267,27 @@ export function SupervisorDashboard() {
       {/* Assign Dialog */}
       <Dialog
         open={assignDialog.open}
-        onOpenChange={(open) => setAssignDialog({ open, ticketId: open ? assignDialog.ticketId : null })}
+        onOpenChange={(open) =>
+          setAssignDialog({
+            open,
+            ticketId: open ? assignDialog.ticketId : null,
+          })
+        }
       >
         <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-card-foreground">Assign Technician</DialogTitle>
+            <DialogTitle className="text-card-foreground">
+              Assign Technician
+            </DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Select a technician to handle this ticket.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
+            <Select
+              value={selectedTechnician}
+              onValueChange={setSelectedTechnician}
+            >
               <SelectTrigger className="bg-input border-border text-card-foreground">
                 <SelectValue placeholder="Select technician" />
               </SelectTrigger>
@@ -285,6 +336,5 @@ export function SupervisorDashboard() {
         />
       )}
     </div>
-  )
+  );
 }
-

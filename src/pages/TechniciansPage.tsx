@@ -34,40 +34,45 @@ export function TechniciansPage() {
   // Calculate statistics for each technician
   const techniciansWithStats = useMemo(() => {
     return technicians.map((tech) => {
-      const techId = typeof tech._id === 'string' ? tech._id : (tech._id as any)?.toString() || '';
+      const techId = tech._id;
 
-      const assignedTickets = tickets.filter(
-        (t: any) => {
-          const assignedToId = typeof t.assignedTo === 'string'
-            ? t.assignedTo
-            : typeof t.assignedTo === 'object' && t.assignedTo?._id
-              ? t.assignedTo._id.toString()
-              : '';
-          return assignedToId === techId && ["Assigned", "In Progress"].includes(t.status);
-        }
-      );
+      const assignedTickets = tickets.filter((t) => {
+        const assigned = t.assignedTo as unknown;
+        const assignedToId =
+          typeof assigned === "string"
+            ? assigned
+            : assigned && typeof assigned === "object" && "_id" in assigned
+              ? ((assigned as { _id?: string })._id ?? "")
+              : "";
+        return (
+          assignedToId === techId &&
+          ["Assigned", "In Progress"].includes(t.status)
+        );
+      });
 
-      const resolvedTickets = tickets.filter(
-        (t: any) => {
-          const assignedToId = typeof t.assignedTo === 'string'
-            ? t.assignedTo
-            : typeof t.assignedTo === 'object' && t.assignedTo?._id
-              ? t.assignedTo._id.toString()
-              : '';
-          return assignedToId === techId && ["Resolved", "Closed"].includes(t.status);
-        }
-      );
+      const resolvedTickets = tickets.filter((t) => {
+        const assigned = t.assignedTo as unknown;
+        const assignedToId =
+          typeof assigned === "string"
+            ? assigned
+            : assigned && typeof assigned === "object" && "_id" in assigned
+              ? ((assigned as { _id?: string })._id ?? "")
+              : "";
+        return (
+          assignedToId === techId && ["Resolved", "Closed"].includes(t.status)
+        );
+      });
 
-      const inProgressTickets = tickets.filter(
-        (t: any) => {
-          const assignedToId = typeof t.assignedTo === 'string'
-            ? t.assignedTo
-            : typeof t.assignedTo === 'object' && t.assignedTo?._id
-              ? t.assignedTo._id.toString()
-              : '';
-          return assignedToId === techId && t.status === "In Progress";
-        }
-      );
+      const inProgressTickets = tickets.filter((t) => {
+        const assigned = t.assignedTo as unknown;
+        const assignedToId =
+          typeof assigned === "string"
+            ? assigned
+            : assigned && typeof assigned === "object" && "_id" in assigned
+              ? ((assigned as { _id?: string })._id ?? "")
+              : "";
+        return assignedToId === techId && t.status === "In Progress";
+      });
 
       return {
         ...tech,
@@ -244,10 +249,7 @@ export function TechniciansPage() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span>
-                    {office?.branchName ||
-                      (typeof tech.officeId === 'object' && (tech.officeId as any)?.branchName) ||
-                      office?.cityName ||
-                      "Unknown office"}
+                    {office?.branchName ?? office?.cityName ?? "Unknown office"}
                   </span>
                 </div>
 
