@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DeleteConfirmationDialog } from "@/features/tickets/components"
 import {
   Clock,
   MapPin,
@@ -26,17 +27,19 @@ import {
   AlertCircle,
   ArrowLeft,
   Edit,
+  Trash2,
   UserCheck,
   History,
 } from "lucide-react"
 import type { TicketStatus } from "@/features/tickets/types"
-import { 
+import {
   useTicket,
   useTicketQueuePosition,
   useRefundEligibility,
   useRequestRefund,
   useSubmitFeedback,
   useUpdateTicket,
+  useDeleteTicket,
   useChangeTicketStatus,
   useConfirmResolution,
   useMarkNotResolved,
@@ -69,6 +72,7 @@ export function TicketDetailPage() {
   const requestRefundMutation = useRequestRefund()
   const confirmResolutionMutation = useConfirmResolution()
   const markNotResolvedMutation = useMarkNotResolved()
+  const deleteTicketMutation = useDeleteTicket()
 
   // UI state
   const [isEditingDescription, setIsEditingDescription] = useState(false)
@@ -77,6 +81,7 @@ export function TicketDetailPage() {
   const [showFeedback, setShowFeedback] = useState(false)
   const [rating, setRating] = useState(0)
   const [feedbackComment, setFeedbackComment] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   // Set initial description when ticket loads
   useEffect(() => {
@@ -142,7 +147,7 @@ export function TicketDetailPage() {
   const isSupervisor = user?.role === "supervisor"
   const isManager = user?.role === "manager"
 
-  const canUpdate = isSupervisor || isManager || isTechnician
+  const canUpdate = isSupervisor || isManager || isTechnician || (isCustomer && ["Pending", "Assigned"].includes(ticket.status))
   const canChangeStatus = isTechnician || isSupervisor || isManager
   const canSubmitFeedback = isCustomer && (ticket.status === "Resolved" || ticket.status === "Closed") && !ticket.rating
 
@@ -212,6 +217,14 @@ export function TicketDetailPage() {
     markNotResolvedMutation.mutate(ticket._id)
   }
 
+  const handleDeleteTicket = () => {
+    deleteTicketMutation.mutate(ticket._id, {
+      onSuccess: () => {
+        navigate("/dashboard/tickets")
+      }
+    })
+  }
+
   return (
     <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
@@ -237,6 +250,22 @@ export function TicketDetailPage() {
         >
           {ticket.status}
         </Badge>
+        {(isManager || (isCustomer && ["Pending", "Assigned"].includes(ticket.status) && (Date.now() - new Date(ticket.createdAt).getTime() < 10 * 60 * 1000))) && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            disabled={deleteTicketMutation.isPending}
+            className="ml-4"
+          >
+            {deleteTicketMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
+            Delete Ticket
+          </Button>
+        )}
       </div>
 
       {/* Queue Position (if available) */}
@@ -605,9 +634,9 @@ export function TicketDetailPage() {
                 <span className="text-muted-foreground">Assigned To:</span>
                 {(() => {
                   // Handle both technician (populated object) and assignedTo (populated object or string)
-                  const technician = ticket.technician || 
+                  const technician = ticket.technician ||
                     (typeof ticket.assignedTo === 'object' && ticket.assignedTo ? ticket.assignedTo : null);
-                  
+
                   if (technician && typeof technician === 'object') {
                     return (
                       <>
@@ -697,7 +726,7 @@ export function TicketDetailPage() {
                     <div className="flex items-start gap-2 text-sm text-muted-foreground">
                       <AlertCircle className="w-4 h-4 mt-0.5" />
                       <span>
-                        {ticket.status === "Pending" || ticket.status === "Assigned" 
+                        {ticket.status === "Pending" || ticket.status === "Assigned"
                           ? "Refund will be available if the ticket remains unresolved for an extended period"
                           : "This ticket is not eligible for a refund"}
                       </span>
@@ -720,6 +749,15 @@ export function TicketDetailPage() {
           )}
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDeleteTicket}
+        isLoading={deleteTicketMutation.isPending}
+        title="Delete Support Ticket"
+        description="Are you sure you want to delete this support ticket? This action cannot be undone and will permanently remove the ticket from your history."
+      />
     </div>
   )
 }

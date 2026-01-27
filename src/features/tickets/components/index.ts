@@ -4,5 +4,7 @@
  */
 
 export { CreateTicketDialog } from './createTicketDialog'
+export { EditTicketDialog } from './editTicketDialog'
+export { DeleteConfirmationDialog } from './deleteConfirmationDialog'
 export { TicketCard } from './ticketCard'
 

@@ -2,12 +2,17 @@ import { useMemo } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { TicketCard } from "@/features/tickets/components/ticketCard";
 import { CreateTicketDialog } from "@/features/tickets/components/createTicketDialog";
+import { EditTicketDialog } from "@/features/tickets/components/editTicketDialog";
+import { DeleteConfirmationDialog } from "@/features/tickets/components/deleteConfirmationDialog";
+import { useState } from "react";
 import {
   useTickets,
   useCustomerTickets,
   useTechnicianTickets,
   useOfficeTickets,
+  useDeleteTicket,
 } from "@/features/tickets/hooks";
+import type { Ticket } from "@/features/tickets/types";
 import { AlertTriangle, Ticket as TicketIcon, Loader2 } from "lucide-react";
 
 export function TicketsPage() {
@@ -15,6 +20,13 @@ export function TicketsPage() {
 
   if (!user) return null;
   const role = user.role;
+
+  const [ticketToEdit, setTicketToEdit] = useState<Ticket | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const deleteTicketMutation = useDeleteTicket();
 
   // Use role-specific hooks - all hooks called unconditionally (Rules of Hooks)
   // But only the relevant one is enabled to avoid unauthorized API calls
@@ -71,6 +83,42 @@ export function TicketsPage() {
     () => role === "supervisor" || role === "manager",
     [role],
   );
+
+  // Handlers
+  const handleAction = (action: string, ticketId: string) => {
+    if (action === "edit") {
+      const ticket = tickets.find((t) => t._id === ticketId);
+      if (ticket) {
+        setTicketToEdit(ticket);
+        setIsEditDialogOpen(true);
+      }
+    } else if (action === "delete") {
+      setTicketToDelete(ticketId);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (ticketToDelete) {
+      deleteTicketMutation.mutate(ticketToDelete, {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          setTicketToDelete(null);
+        },
+      });
+    }
+  };
+
+  const getCustomerActions = (ticket: Ticket) => {
+    const actions = [];
+    if (ticket.status === "Pending" || ticket.status === "Assigned") {
+      actions.push({ label: "Edit", action: "edit", variant: "outline" as const });
+    }
+    if ((ticket.status === "Pending" || ticket.status === "Assigned") && (Date.now() - new Date(ticket.createdAt).getTime() < 10 * 60 * 1000)) {
+      actions.push({ label: "Delete", action: "delete", variant: "destructive" as const });
+    }
+    return actions;
+  };
 
   // Loading state
   if (isLoading) {
@@ -143,6 +191,8 @@ export function TicketsPage() {
                     ticket={ticket}
                     showQueue={role === "customer"}
                     showCustomer={showCustomer}
+                    onAction={handleAction}
+                    actions={role === "customer" ? getCustomerActions(ticket) : undefined}
                   />
                 ))}
               </div>
@@ -150,6 +200,21 @@ export function TicketsPage() {
           </section>
         ))}
       </div>
+
+      <EditTicketDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        ticket={ticketToEdit}
+      />
+
+      <DeleteConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isLoading={deleteTicketMutation.isPending}
+        title="Delete Support Ticket"
+        description="Are you sure you want to delete this support ticket? This action cannot be undone."
+      />
     </div>
   );
 }

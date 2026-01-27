@@ -20,16 +20,16 @@ export interface UserListResponse {
   technicians?: User[]
   supervisors?: User[]
 }
- export const  userapi={
 
-     getCustomersByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
+export const userapi = {
+  getCustomersByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
     const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/customers', {
       params: { officeId }
     })
     return response.data
   },
 
-   // Get Technicians by office
+  // Get Technicians by office
   getTechniciansByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
     const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/technicians', {
       params: { officeId }
@@ -37,10 +37,15 @@ export interface UserListResponse {
     return response.data
   },
 
-   getSupervisorsByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
+  getSupervisorsByOffice: async (officeId?: string): Promise<ApiResponse<UserListResponse>> => {
     const response = await apiClient.get<ApiResponse<UserListResponse>>('/users/supervisors', {
       params: { officeId }
     })
+    return response.data
+  },
+
+  createUser: async (data: any): Promise<ApiResponse<{ document: User }>> => {
+    const response = await apiClient.post<ApiResponse<{ document: User }>>('/users', data)
     return response.data
   },
 }

@@ -21,6 +21,7 @@ import {
   Users,
   BarChart3,
   Wrench,
+  MapPin,
   LogOut,
   Menu,
   X,
@@ -104,14 +105,24 @@ const navItemsByRole: Record<string, NavItem[]> = {
       icon: <LayoutDashboard className="w-5 h-5" />,
     },
     {
-      label: "All Tickets",
+      label: "Tickets",
       href: "/dashboard/tickets",
       icon: <Ticket className="w-5 h-5" />,
     },
     {
-      label: "Outages",
-      href: "/dashboard/outages",
-      icon: <AlertTriangle className="w-5 h-5" />,
+      label: "Supervisors",
+      href: "/dashboard/supervisors",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
+      label: "Technicians",
+      href: "/dashboard/technicians",
+      icon: <Wrench className="w-5 h-5" />,
+    },
+    {
+      label: "Offices",
+      href: "/dashboard/offices",
+      icon: <MapPin className="w-5 h-5" />,
     },
     {
       label: "Refunds",
@@ -119,9 +130,9 @@ const navItemsByRole: Record<string, NavItem[]> = {
       icon: <DollarSign className="w-5 h-5" />,
     },
     {
-      label: "Offices",
-      href: "/dashboard/offices",
-      icon: <Users className="w-5 h-5" />,
+      label: "Outages",
+      href: "/dashboard/outages",
+      icon: <AlertTriangle className="w-5 h-5" />,
     },
     {
       label: "Analytics",
