@@ -5,7 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Phone, MapPin, Search, Filter, Loader2, UserPlus } from "lucide-react";
+import {
+  Users,
+  Phone,
+  MapPin,
+  Search,
+  Filter,
+  Loader2,
+  UserPlus,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOffices } from "@/features/offices/hooks/useOffices";
 import { useTechniciansByOffice } from "@/features/users/hooks/ getTechnicians";
@@ -22,7 +30,8 @@ export function TechniciansPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Fetch technicians for the office
-  const { data: technicians = [], isLoading: techniciansLoading } = useTechniciansByOffice(user?.officeId);
+  const { data: technicians = [], isLoading: techniciansLoading } =
+    useTechniciansByOffice(user?.officeId);
 
   // Fetch all office tickets to calculate statistics
   const { data: tickets = [], isLoading: ticketsLoading } = useOfficeTickets();
