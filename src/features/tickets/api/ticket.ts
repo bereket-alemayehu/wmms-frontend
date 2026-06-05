@@ -362,3 +362,31 @@ export const getTopRatedTechnicians = async (limit: number = 3): Promise<{
   });
   return response.data.data.technicians;
 };
+
+/**
+ * Get resolution estimation
+ * Backend: GET /tickets/estimation
+ */
+export const getResolutionEstimation = async (
+  officeId?: string,
+  category?: string
+): Promise<{
+  estimatedTimeMs: number;
+  estimatedTimeHours: number;
+  estimatedTimeDays: number;
+}> => {
+  const params: any = {};
+  if (officeId) params.officeId = officeId;
+  if (category) params.category = category;
+
+  const response = await apiClient.get<{
+    status: string;
+    data: {
+      estimatedTimeMs: number;
+      estimatedTimeHours: number;
+      estimatedTimeDays: number;
+    };
+  }>("/tickets/estimation", { params });
+
+  return response.data.data;
+};

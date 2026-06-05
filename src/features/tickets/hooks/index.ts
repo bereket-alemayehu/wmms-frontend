@@ -4,11 +4,11 @@
  */
 
 // Query Hooks
-export { 
-  useTickets, 
-  useCustomerTickets, 
-  useTechnicianTickets, 
-  useOfficeTickets 
+export {
+  useTickets,
+  useCustomerTickets,
+  useTechnicianTickets,
+  useOfficeTickets
 } from './useTickets'
 export { useTicket } from './useTicket'
 export { useTicketQueuePosition } from './useTicketQueuePosition'
@@ -17,6 +17,7 @@ export { useOfficeQueueStatistics } from './useOfficeQueueStatistics'
 export { useTechnicianStatistics } from './useTechnicianStatistics'
 export { useSystemAnalytics } from './useSystemAnalytics'
 export { useTopRatedTechnicians } from './useTopRatedTechnicians'
+export { useResolutionEstimation } from './useResolutionEstimation'
 
 // Mutation Hooks
 export { useCreateTicket } from './useCreateTicket'

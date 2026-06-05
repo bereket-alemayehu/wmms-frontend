@@ -110,7 +110,7 @@ export function TicketsPage() {
   };
 
   const getCustomerActions = (ticket: Ticket) => {
-    const actions = [];
+    const actions: any[] = [];
     if (ticket.status === "Pending" || ticket.status === "Assigned") {
       actions.push({ label: "Edit", action: "edit", variant: "outline" as const });
     }

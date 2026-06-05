@@ -178,7 +178,7 @@ export function ManagerDashboard() {
       }, new Map<string, { _id: string; fullName: string; phoneNumber?: string }>())
       .values(),
   );
-  const technicianWorkload = technicians.map((tech) => {
+  const technicianWorkload = technicians.map((tech: any) => {
     const assignedTickets = tickets.filter((t) => t.assignedTo === tech._id);
     const resolvedAssigned = assignedTickets.filter((t) =>
       ["Resolved", "Closed"].includes(t.status),

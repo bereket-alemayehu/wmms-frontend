@@ -4,7 +4,7 @@ import { StatsCard } from "./stats-card";
 import { TicketCard } from "@/features/tickets/components/ticketCard";
 import { OutageCard } from "@/features/outages/components/outage-card";
 import { CreateTicketDialog } from "@/features/tickets/components/createTicketDialog";
-import { useCustomerTickets } from "@/features/tickets/hooks";
+import { useCustomerTickets, useResolutionEstimation } from "@/features/tickets/hooks";
 import { useRefunds } from "@/features/refunds/hooks/useRefunds";
 import { useOutages } from "@/features/outages/hooks";
 import {
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 
 export function CustomerDashboard() {
   const { user } = useAuth();
-  
+
   // Fetch customer's own tickets using specific backend route
   const { data: tickets = [], isLoading } = useCustomerTickets();
 
@@ -30,13 +30,16 @@ export function CustomerDashboard() {
 
   // Fetch outages for the customer's office
   const { data: outages = [], isLoading: outagesLoading } = useOutages(user?.officeId);
-  
+
+  // Fetch resolution estimation
+  const { data: estimation } = useResolutionEstimation(user?.officeId);
+
   // Calculate stats
   const openTickets = useMemo(
     () => tickets.filter((t) => !["Resolved", "Closed"].includes(t.status)),
     [tickets]
   );
-  
+
   const resolvedTickets = useMemo(
     () => tickets.filter((t) => ["Resolved", "Closed"].includes(t.status)),
     [tickets]
@@ -53,7 +56,7 @@ export function CustomerDashboard() {
     () => customerRefunds.filter((r) => r.status === "Approved"),
     [customerRefunds]
   );
-  
+
   const totalRefundAmount = useMemo(
     () => approvedRefunds.reduce((sum, r) => sum + r.amount, 0),
     [approvedRefunds]
@@ -104,9 +107,9 @@ export function CustomerDashboard() {
         />
         <StatsCard
           title="Avg. Wait Time"
-          value="2.5 days"
+          value={estimation ? `${estimation.estimatedTimeDays} days` : "2.5 days"}
           icon={<Clock className="w-5 h-5" />}
-          description="Current estimate"
+          description="Avg. resolution time"
         />
         <StatsCard
           title="My Refunds"
@@ -172,7 +175,7 @@ export function CustomerDashboard() {
                               className={cn(
                                 "font-medium",
                                 statusColors[refund.status] ||
-                                  "bg-secondary text-secondary-foreground border-border"
+                                "bg-secondary text-secondary-foreground border-border"
                               )}
                             >
                               {refund.status}

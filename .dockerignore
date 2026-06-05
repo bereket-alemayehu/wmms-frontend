@@ -1,0 +1,35 @@
+# dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# build output
+dist
+build
+
+# tests / coverage
+coverage
+vitest.coverage
+*.lcov
+
+# git (DO NOT exclude in Silver builds if repo zip includes it, but safe to ignore in Docker context)
+.git
+
+# environment files
+.env
+.env.local
+.env.*.local
+
+# editor / system files
+.vscode
+.idea
+.DS_Store
+
+# logs
+logs
+*.log
+
+# optional cache
+.vite
+.eslintcache
